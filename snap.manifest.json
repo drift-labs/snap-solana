@@ -1,0 +1,46 @@
+{
+  "version": "1.0.0",
+  "description": "An example Snap written in TypeScript.",
+  "proposedName": "TypeScript Example Snap",
+  "repository": {
+    "type": "git",
+    "url": "https://example.com/"
+  },
+  "source": {
+    "shasum": "+5JmpJ5dxWXL/WU/tno1k+qCwZaKe+/G2fcY4xk9I3Q=",
+    "location": {
+      "npm": {
+        "filePath": "dist/bundle.js",
+        "iconPath": "images/icon.svg",
+        "packageName": "my-webpack-project",
+        "registry": "https://registry.npmjs.org/"
+      }
+    }
+  },
+  "initialPermissions": {
+    "snap_dialog": {},
+    "endowment:rpc": {
+      "dapps": true,
+      "snaps": false
+    },
+    "snap_getBip44Entropy": [
+      {
+        "coinType": 501
+      }
+    ],
+    "snap_getBip32PublicKey": [
+      {
+        "path": [
+          "m",
+          "44'",
+          "501'",
+          "0'",
+          "0'",
+          "0'"
+        ],
+        "curve": "ed25519"
+      }
+    ]
+  },
+  "manifestVersion": "0.1"
+}

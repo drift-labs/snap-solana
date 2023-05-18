@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "target": "ESNext"
+  },
+  "extends": "../tsconfig.json",
+  "files": ["plugin.ts"]
+}

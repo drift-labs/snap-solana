@@ -1,0 +1,11 @@
+.idea
+.DS_Store
+node_modules
+**/.env.local
+.env
+**/*.tsbuildinfo
+lib
+**/*.log
+dist
+snaps-webpack-plugin/plugin.js
+snaps-webpack-plugin/plugin.js.map
