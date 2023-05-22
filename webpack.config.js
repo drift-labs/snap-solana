@@ -10,12 +10,12 @@ const config = {
   entry: "./src/index.ts",
   output: {
     path: path.resolve(__dirname, "dist"),
+    publicPath: "/",
+    libraryTarget: "commonjs2",
   },
-  devServer: {
-    open: true,
-    host: "localhost",
-    port: 8080,
-  },
+  // development mode doesn't work with mm snap's SES eval apparently
+  mode: "production",
+  // devServer doesn't work with it either, so no devServer, just using server.ts
   performance: {
     hints: false,
     maxEntrypointSize: 2000000,
@@ -25,12 +25,8 @@ const config = {
     new webpack.ProvidePlugin({
       Buffer: ["buffer", "Buffer"],
     }),
-    // @ts-ignore
     new SnapsWebpackPlugin({
       stripComments: true,
-      eval: true,
-      manifestPath: "./snap.manifest.json",
-      writeManifest: true,
     }),
   ],
   module: {
@@ -44,9 +40,6 @@ const config = {
         test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
         type: "asset",
       },
-
-      // Add your rules for custom modules here
-      // Learn more about loaders from https://webpack.js.org/loaders/
     ],
   },
   resolve: {
@@ -58,10 +51,5 @@ const config = {
 };
 
 module.exports = () => {
-  if (isProduction) {
-    config.mode = "production";
-  } else {
-    config.mode = "development";
-  }
   return config;
 };
