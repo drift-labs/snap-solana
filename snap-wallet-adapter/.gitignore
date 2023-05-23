@@ -8,5 +8,3 @@ node_modules
 lib
 **/*.log
 dist
-snaps-webpack-plugin/plugin.js
-snaps-webpack-plugin/plugin.js.map

@@ -1,6 +1,10 @@
 const through = require("through2");
 
-// Note: this is not being used right now because it didn't like @solana/web3.js, can't figure out a fix
+// This is the default bundler config for the mm-snaps CLI.
+
+// Note that this file is NOT being used right now because it didn't like @solana/web3.js, can't figure out a fix
+
+// So we are using webpack to build instead
 
 module.exports = {
   cliOptions: {

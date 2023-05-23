@@ -1,18 +1,20 @@
 import { Keypair } from "@solana/web3.js";
 import { Buffer } from "buffer";
 
-// Derivation path and curve used for Solana:
-const derivationPath = ["m", "44'", "501'", "0'", "0'"];
+// Derivation path and curve used for Solana, add one value to the end for account index
+const derivationPathBase = ["m", "44'", "501'", "0'"];
 const curve = "ed25519";
 
 /**
- * Derives a solana keypair of target address index (default 0) withh BIP32
+ * Derives a solana keypair of target address index 0 with BIP32
+ *
+ * @param index - account index to derive, defaults to 0
  */
-export async function deriveSolanaKeypair() {
+export async function deriveSolanaKeypair(index?: number) {
   const SLIP10Node = await snap.request({
     method: "snap_getBip32Entropy",
     params: {
-      path: derivationPath,
+      path: [...derivationPathBase, `${index ?? 0}'`],
       curve,
     },
   });

@@ -12,6 +12,9 @@ import { promisify } from "util";
 import { Compiler, WebpackError } from "webpack";
 import { RawSource, SourceMapSource } from "webpack-sources";
 
+// Note: this is COPIED from the official snaps webpack plugin repo. Their npm package did not work because of how it was bundled I think...
+// Here the export is just changed to a named export instead of export default.
+
 const PLUGIN_NAME = "SnapsWebpackPlugin";
 
 type PluginOptions = {

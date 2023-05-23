@@ -1,8 +1,8 @@
 {
-  "name": "@drift-labs/mm-snap-solana",
+  "name": "@drift-labs/snap-solana",
   "version": "1.0.0",
   "private": true,
-  "description": "My webpack project",
+  "description": "A metamask snap for interacting with Solana dApps",
   "repository": {
     "type": "git",
     "url": "https://example.com/"
