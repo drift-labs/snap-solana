@@ -7,7 +7,7 @@
     "url": "https://example.com/"
   },
   "source": {
-    "shasum": "lrGTH6UdXuSCejVU+yflQIZ/9QwQJdeCq585pAJtca0=",
+    "shasum": "QyDre8rH1qxO1zhmE09pGwOrROt10oszDg9p/YO1sdk=",
     "location": {
       "npm": {
         "filePath": "dist/main.js",
@@ -23,9 +23,16 @@
       "dapps": true,
       "snaps": false
     },
-    "snap_getBip44Entropy": [
+    "snap_getBip32Entropy": [
       {
-        "coinType": 501
+        "path": [
+          "m",
+          "44'",
+          "501'",
+          "0'",
+          "0'"
+        ],
+        "curve": "ed25519"
       }
     ]
   },
