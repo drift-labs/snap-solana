@@ -27,7 +27,8 @@
     "lint:misc": "prettier '**/*.json' '**/*.md' '!CHANGELOG.md' --ignore-path .gitignore",
     "watch": "webpack --watch",
     "serve": "ts-node ./server.ts",
-    "build-webpack-plugin": "cd snaps-webpack-plugin && tsc && cd .."
+    "build-webpack-plugin": "cd snaps-webpack-plugin && tsc && cd ..",
+    "dev": "yarn watch"
   },
   "dependencies": {
     "@metamask/key-tree": "^7.0.0",

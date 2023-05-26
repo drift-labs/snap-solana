@@ -4,10 +4,10 @@
   "proposedName": "Solana Snap",
   "repository": {
     "type": "git",
-    "url": "https://github.com/drift-labs/snap-solana"
+    "url": "https://example.com/"
   },
   "source": {
-    "shasum": "/9iVM60sdwraN7VzHyVydaoTw95f8pD9B3yhSNfZJ9I=",
+    "shasum": "1OD4oXgcLJX1h8gHGl3F90gXdoR0Wj77TtIwS9D3Yoc=",
     "location": {
       "npm": {
         "filePath": "dist/main.js",
@@ -25,7 +25,13 @@
     },
     "snap_getBip32Entropy": [
       {
-        "path": ["m", "44'", "501'", "0'", "0'"],
+        "path": [
+          "m",
+          "44'",
+          "501'",
+          "0'",
+          "0'"
+        ],
         "curve": "ed25519"
       }
     ]
