@@ -1,6 +1,21 @@
 {
-  "name": "@drift-labs/snap-wallet-adapter",
-  "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT"
+	"name": "@drift-labs/snap-wallet-adapter",
+	"version": "1.0.0",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "rm -rf dist && tsc"
+	},
+	"license": "MIT",
+	"dependencies": {
+		"@solana/wallet-adapter-base": "^0.9.22",
+		"@solana/web3.js": "^1.76.0",
+		"typescript": "^5.0.4"
+	},
+	"devDependencies": {
+		"@metamask/providers": "^11.0.0"
+	}
 }
