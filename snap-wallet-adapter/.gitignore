@@ -8,3 +8,4 @@ node_modules
 lib
 **/*.log
 dist
+src/version.ts

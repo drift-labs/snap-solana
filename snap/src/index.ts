@@ -1,5 +1,6 @@
 import { OnRpcRequestHandler } from '@metamask/snaps-types';
 import { panel, text } from '@metamask/snaps-ui';
+import { Keypair, SerializeConfig, Transaction } from '@solana/web3.js';
 
 import { deriveSolanaKeypair } from './keypair';
 
@@ -36,9 +37,68 @@ const showPublicKeyHandler = async () => {
 	});
 };
 
+/**
+ * Returns the public key for use in the UI that Metmask is connected to
+ */
 const getPublicKeyHandler = async () => {
 	const keypair = await deriveSolanaKeypair();
 	return keypair?.publicKey?.toString();
+};
+
+
+interface signTransactionParams {
+  origin: string;
+  transaction: number[] | Uint8Array | Buffer;
+  serializeConfig?: SerializeConfig;
+}
+
+/**
+ * Signs a single Solana transaction, serialized
+ */
+const signTransactionHandler = async (params: signTransactionParams) => {
+  throw new Error('example error');
+  
+	const confirmed = await snap.request({
+		method: 'snap_dialog',
+		params: {
+			type: 'confirmation',
+			content: panel([
+				text(`**${params.origin}** would like to sign a transaction`),
+			]),
+		},
+	});
+
+  if (confirmed) {
+    const keypair = await deriveSolanaKeypair() as Keypair;
+
+    // TODO: Make sure the tx is unserialized correctly:
+    const tx = Transaction.from(Buffer.from(params.transaction));
+
+    tx.sign(keypair);
+
+    const signatures = tx.signatures;
+    const signedTransaction = tx.serialize(params?.serializeConfig);
+
+    return JSON.stringify({
+      signatures,
+      transaction: signedTransaction
+    });
+  }
+};
+
+
+interface signAllTransactionsParams {
+  transactions: signTransactionParams[]
+}
+
+/**
+ * Signs all Solana transactions in an array of serialized transactions
+ */
+const signAllTransactionsHandler = async (_params: signAllTransactionsParams) => {
+  const _keypair = await deriveSolanaKeypair() as Keypair;
+
+  // TODO finish this method
+
 };
 
 /**
@@ -58,10 +118,19 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 	switch (request.method) {
 		case 'hello':
 			return helloWorldHandler(origin);
+      
 		case 'showPublicKey':
 			return await showPublicKeyHandler();
+
 		case 'getPublicKey':
 			return await getPublicKeyHandler();
+
+    case "signTransaction":
+      return await signTransactionHandler({ origin, transaction: request?.transaction, serializeConfig: request?.serializeConfig });
+
+    case "signAllTransactions": 
+      return await signAllTransactionsHandler({ transactions: request?.transactions });
+
 		default:
 			throw new Error('Method not found.');
 	}

@@ -1,13 +1,13 @@
 {
   "version": "1.0.0",
   "description": "A snap for interacting with Solana DApps",
-  "proposedName": "Solana Snap",
+  "proposedName": "Solana Wallet",
   "repository": {
     "type": "git",
-    "url": "https://example.com/"
+    "url": "https://github.com/drift-labs/snap-solana"
   },
   "source": {
-    "shasum": "1OD4oXgcLJX1h8gHGl3F90gXdoR0Wj77TtIwS9D3Yoc=",
+    "shasum": "SAtDvRhe7IQJRxPJeVi7GJJ7btFNm/wEzFDuVac3d5I=",
     "location": {
       "npm": {
         "filePath": "dist/main.js",

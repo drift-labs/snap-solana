@@ -5,7 +5,7 @@
   "description": "A metamask snap for interacting with Solana dApps",
   "repository": {
     "type": "git",
-    "url": "https://example.com/"
+    "url": "https://github.com/drift-labs/snap-solana"
   },
   "license": "MIT",
   "main": "src/index.ts",

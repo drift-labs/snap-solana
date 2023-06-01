@@ -11,6 +11,13 @@ import {
 	WalletReadyState,
 } from '@solana/wallet-adapter-base';
 
+// The current version of the snap package
+// Automatically generated when running yarn or yarn build
+// The snap id should probably have a default imported like this too
+import { SNAP_VERSION } from './version';
+
+const metamaskIcon = 'https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/metamask-fox.svg';
+
 export type GetSnapsResponse = Record<string, Snap>;
 
 export type Snap = {
@@ -23,36 +30,28 @@ export type Snap = {
 export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
 	name: WalletName<string>;
 	url: string;
-	icon: string;
 	readyState: WalletReadyState;
 	connecting: boolean;
 	supportedTransactionVersions?: ReadonlySet<TransactionVersion>;
 	snapId: string;
-	snapVersion: string;
+  icon = metamaskIcon;
+
+  public static icon = metamaskIcon;
 
 	public publicKey: PublicKey;
 	public autoApprove: boolean;
 
 	public constructor({
 		snapId,
-		snapVersion,
 		url,
 	}: {
 		snapId: string;
-		snapVersion: string;
 		url: string;
 	}) {
 		super();
 
 		this.snapId = snapId;
-		this.snapVersion = snapVersion;
-
-		// For now, pass these in. Eventually sould be hosted somewhere probably
 		this.url = url;
-
-		// Not sure if this works as a public resource? We'll see
-		this.icon =
-			'https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/metamask-fox.svg';
 	}
 
 	public async signMessage(_message: Uint8Array): Promise<Uint8Array> {
@@ -61,17 +60,23 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
 
 	// @ts-ignore
 	public async signTransaction(tx: Transaction | VersionedTransaction) {
+    console.log('stringified tx: ', JSON.stringify(tx.serialize()));
+
 		// @ts-ignore -- why isn't this working?
-		const signed = (await window.ethereum.request({
+		const result = await window.ethereum.request({
 			method: 'wallet_invokeSnap',
 			params: {
 				snapId: this.snapId,
 				request: {
 					method: 'signTransaction',
-					serializedTx: tx.serialize().toString(),
+					transaction: tx.serialize()
 				},
 			},
-		})) as Transaction;
+		});
+
+    console.log(JSON.stringify(result));
+
+    const signed = Transaction.from(result);
 
 		return signed;
 	}
@@ -87,34 +92,33 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
 
 	/**
 	 * Connects to a metamask snap
+   *
+   * @param forceUpdate - optional, forces the snap to be reinstalled on each connect if true
+   *
 	 */
-	public connect = async () => {
+	public connect = async (forceUpdate?: boolean) => {
 		if (!window.ethereum) {
 			throw new Error('Metamask not detected');
 		}
-
-		console.log('connecting to snap');
 
 		const installedSnaps = (await window.ethereum.request({
 			method: 'wallet_getSnaps',
 		})) as GetSnapsResponse;
 
-		console.log('installedSnaps', installedSnaps);
+		// console.log('installedSnaps', JSON.stringify(installedSnaps));
 
 		// If snap is not installed or version is outdated, ask to (re)install it
-		// if (!installedSnaps['solana-wallet']) {
-		// }
-
-		// Then connect it
-
-		await window.ethereum.request({
-			method: 'wallet_requestSnaps',
-			params: {
-				[this.snapId]: {
-					version: this.snapVersion,
-				},
-			},
-		});
+		if (!installedSnaps[this.snapId] || installedSnaps[this.snapId]?.version !== SNAP_VERSION || forceUpdate) {
+      // console.log('snap needs to be installed/updated');
+      await window.ethereum.request({
+        method: 'wallet_requestSnaps',
+        params: {
+          [this.snapId]: {
+            version: SNAP_VERSION,
+          },
+        },
+      });
+    }
 
 		const publicKey = new PublicKey(
 			await window.ethereum.request({
@@ -133,5 +137,10 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
 		this.emit('connect', publicKey);
 	};
 
-	public disconnect = async () => {};
+	public disconnect = async () => {
+    // Not sure if there's much for us to do here?
+    this.publicKey = undefined;
+    this.snapId = undefined;
+    this.emit('disconnect');
+  };
 }
