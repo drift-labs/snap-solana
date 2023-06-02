@@ -1,25 +1,27 @@
 import { OnRpcRequestHandler } from '@metamask/snaps-types';
 import { panel, text } from '@metamask/snaps-ui';
 import { Keypair, SerializeConfig, Transaction } from '@solana/web3.js';
-
 import { deriveSolanaKeypair } from './keypair';
 
-const helloWorldHandler = (origin: string) => {
-	return snap.request({
+// Simple switch for debugging, will show errors in a snap dialog
+const DEBUG = false;
+
+const showDebugDialog = (err: any) => {
+  snap.request({
 		method: 'snap_dialog',
 		params: {
-			type: 'confirmation',
+			type: 'alert',
 			content: panel([
-				text(`Hello, **${origin}**!`),
-				text('This custom confirmation is just for display purposes.'),
-				text(
-					'But you can edit the snap source code to make it do something, if you want to!'
-				),
+				text(`${err}`),
 			]),
 		},
 	});
 };
 
+
+/**
+ * Shows the Solana public key in Metamask, mostly just for testing
+ */
 const showPublicKeyHandler = async () => {
 	const keypair = await deriveSolanaKeypair();
 
@@ -35,32 +37,52 @@ const showPublicKeyHandler = async () => {
 	});
 };
 
+
 /**
  * Returns the public key for use in the UI that Metmask is connected to
  */
 const getPublicKeyHandler = async () => {
-	const keypair = await deriveSolanaKeypair();
-	return keypair?.publicKey?.toString();
+  try {
+    const keypair = await deriveSolanaKeypair();
+    return keypair?.publicKey?.toString();
+  } catch (err) {
+    if (DEBUG) {
+      showDebugDialog(err);
+    }
+    throw err;
+  }
 };
 
+
+/**
+ * A Transaction param for signing
+ */
 type TransactionParams = {
   /**
-   * JSON.stringified buffer (serialized solana tx)
+   * JSON.stringified Buffer -- the mm json rpc handles this a little differently than a plain JSON.stringify, because the buffer becomes an object with keys and values instead of an actual array. From the UI side though, it should just be passed into the json rpc as a buffer.
    */
   transaction: Record<string, number>;
+
+  /**
+   * A Solana SerializeConfig to be used with the transaction when serializing the signed transaction.
+   */
   serializeConfig?: SerializeConfig;
 }
 
+
+/**
+ * All parameters for for signTransactionHandler
+ */
 type SignTransactionParams = {
   origin: string
 } & TransactionParams
+
 
 /**
  * Signs a single Solana transaction
  */
 const signTransactionHandler = async (params: SignTransactionParams) => {
   try {
-    // Somehow params.transaction gets changed into an keyed object instead of an array when being sent through the json rpc... weird.
     const byteArray = Object.keys(params.transaction).map(key => params.transaction[key]);
     const buf = Buffer.from(byteArray);
     const tx = Transaction.from(buf);
@@ -85,19 +107,6 @@ const signTransactionHandler = async (params: SignTransactionParams) => {
       const signatures = tx.signatures;
       const signedTransaction = tx.serialize(params?.serializeConfig);
 
-      // For debugging:
-      // await snap.request({
-      //   method: 'snap_dialog',
-      //   params: {
-      //     type: 'confirmation',
-      //     content: panel([
-      //       text(`Ok to return?`),
-      //       text(JSON.stringify(tx)),
-      //       text(JSON.stringify(tx.signatures))
-      //     ]),
-      //   },
-      // });
-
       return {
         signatures: signatures.map(sig => ({
           publicKey: sig.publicKey.toString(),
@@ -109,35 +118,80 @@ const signTransactionHandler = async (params: SignTransactionParams) => {
       throw new Error('User rejected transaction');
     }
   } catch (err) {
-    // For debugging:
-    // await snap.request({
-    //   method: 'snap_dialog',
-    //   params: {
-    //     type: 'confirmation',
-    //     content: panel([
-    //       text(`${err}`),
-    //       text(`${JSON.stringify(params)}`)
-    //     ]),
-    //   },
-    // });
+    if (DEBUG) {
+      showDebugDialog(err);
+    }
+    throw err;
   }
 };
 
 
+/**
+ * All parameters for signAllTransactionsHandler
+ */
 type signAllTransactionsParams = {
   origin: string;
   transactions: TransactionParams[]
 }
 
+
 /**
- * Signs all Solana transactions in an array of serialized transactions
+ * Signs all Solana transactions in params.transactions
  */
-const signAllTransactionsHandler = async (_params: signAllTransactionsParams) => {
+const signAllTransactionsHandler = async (params: signAllTransactionsParams) => {
   const _keypair = await deriveSolanaKeypair() as Keypair;
 
-  // TODO finish this method
+  try {
+    // Turn all JSON params into Transaction objects
+    const transactions = params.transactions.map(paramTx => {
+      const byteArray = Object.keys(paramTx.transaction).map(key => paramTx.transaction[key]);
+      const buf = Buffer.from(byteArray);
+      const tx = Transaction.from(buf);
+      return tx;
+    });
 
+    // How can we make this message more user-friendly?
+    const confirmed = await snap.request({
+      method: 'snap_dialog',
+      params: {
+        type: 'confirmation',
+        content: panel([
+          text(`**${params.origin}** would like to sign the following transactions:`),
+          ...transactions.map(tx => text(JSON.stringify(tx)))
+        ]),
+      },
+    });
+
+    if (confirmed) {
+      const keypair = await deriveSolanaKeypair() as Keypair;
+
+      const signed = transactions.map((tx, index) => {
+        tx.sign(keypair);
+        const signatures = tx.signatures;
+        const serializeConfig = params.transactions[index]?.serializeConfig;
+        const signedTransaction = tx.serialize(serializeConfig);
+
+        return {
+          signatures: signatures.map(sig => ({
+            publicKey: sig.publicKey.toString(),
+            signature: sig.signature?.toJSON()
+          })),
+          transaction: signedTransaction.toJSON()
+        };
+      });
+
+      return signed;
+    } else {
+      throw new Error('User rejected transaction');
+    }
+  } catch (err) {
+    if (DEBUG) {
+      showDebugDialog(err);
+    }
+    throw err;
+  }
 };
+
 
 /**
  * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
@@ -153,10 +207,9 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 	origin,
 	request,
 }) => {
+  const params = request?.params as Record<string, any>;
+
 	switch (request.method) {
-		case 'hello':
-			return helloWorldHandler(origin);
-      
 		case 'showPublicKey':
 			return await showPublicKeyHandler();
 
@@ -166,17 +219,14 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
     case "signTransaction":
       return await signTransactionHandler({ 
         origin,
-        // @ts-ignore
-        transaction: request?.params?.transaction,
-        // @ts-ignore
-        serializeConfig: request?.params?.serializeConfig
+        transaction: params?.transaction,
+        serializeConfig: params?.serializeConfig
       });
 
     case "signAllTransactions": 
       return await signAllTransactionsHandler({ 
         origin,
-        // @ts-ignore
-        transactions: request?.params?.transactions 
+        transactions: params?.transactions 
       });
 
 		default:

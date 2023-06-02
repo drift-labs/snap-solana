@@ -78,15 +78,6 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
       verifySignatures: false
     });
 
-    // For debugging
-    // const bufferJson = JSON.stringify(serialized);
-    // const restoredBuf = Buffer.from(JSON.parse(bufferJson).data);
-    // const restoredTx = Transaction.from(restoredBuf);
-
-    // If these match, we good:
-    // console.log(JSON.stringify(restoredTx));
-    // console.log(JSON.stringify(tx));
-
     const rpcRequestObject = {
       method: 'signTransaction',
       params: {
@@ -115,12 +106,33 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
 	}
 
 	// @ts-ignore
-	public async signAllTransactions(txes: Transaction[]) {
-		const results = await Promise.all(
-			txes.map((tx) => this.signTransaction(tx))
-		);
+	public async signAllTransactions(txes: (Transaction | VersionedTransaction)[]) {
+    const serialized = txes.map(tx => tx.serialize({
+      requireAllSignatures: false,
+      verifySignatures: false
+    }));
 
-		return results;
+    const rpcRequestObject = {
+      method: 'signAllTransactions',
+      params: {
+        transactions: serialized
+      }
+    };
+
+		const results = await window.ethereum.request({
+			method: 'wallet_invokeSnap',
+			params: {
+				snapId: this.snapId,
+				request: rpcRequestObject,
+			},
+		}) as SignTransactionResults[];
+
+    // De-serialize results:
+    const signedTxes = results.map(result =>
+      Transaction.from(Buffer.from(result?.transaction?.data))
+    );
+
+		return signedTxes;
 	}
 
 	/**
