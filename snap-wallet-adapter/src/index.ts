@@ -18,6 +18,19 @@ import { SNAP_VERSION } from './version';
 
 const metamaskIcon = 'https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/metamask-fox.svg';
 
+type BufferJson = {
+  type: 'Buffer',
+  data: number[]
+}
+
+type SignTransactionResults = {
+  transaction: BufferJson,
+  signatures: {
+    publicKey: string,
+    signature: BufferJson
+  }[]
+}
+
 export type GetSnapsResponse = Record<string, Snap>;
 
 export type Snap = {
@@ -45,8 +58,8 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
 		snapId,
 		url,
 	}: {
-		snapId: string;
-		url: string;
+		snapId: string; 
+    url: string;
 	}) {
 		super();
 
@@ -60,25 +73,45 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
 
 	// @ts-ignore
 	public async signTransaction(tx: Transaction | VersionedTransaction) {
-    console.log('stringified tx: ', JSON.stringify(tx.serialize()));
+    const serialized = tx.serialize({
+      requireAllSignatures: false,
+      verifySignatures: false
+    });
 
-		// @ts-ignore -- why isn't this working?
-		const result = await window.ethereum.request({
+    // For debugging
+    // const bufferJson = JSON.stringify(serialized);
+    // const restoredBuf = Buffer.from(JSON.parse(bufferJson).data);
+    // const restoredTx = Transaction.from(restoredBuf);
+
+    // If these match, we good:
+    // console.log(JSON.stringify(restoredTx));
+    // console.log(JSON.stringify(tx));
+
+    const rpcRequestObject = {
+      method: 'signTransaction',
+      params: {
+        transaction: serialized
+      }
+    };
+
+		const results = await window.ethereum.request({
 			method: 'wallet_invokeSnap',
 			params: {
 				snapId: this.snapId,
-				request: {
-					method: 'signTransaction',
-					transaction: tx.serialize()
-				},
+				request: rpcRequestObject,
 			},
-		});
+		}) as SignTransactionResults;
 
-    console.log(JSON.stringify(result));
+    // De-serialize results:
+    const signedTx = Transaction.from(Buffer.from(results?.transaction?.data));
 
-    const signed = Transaction.from(result);
+    // Might not need this? Could be useful for debugging though
+    const _signatures = results?.signatures?.map(sig => ({
+      publicKey: sig.publicKey,
+      signature: Buffer.from(sig.signature.data)
+    }));
 
-		return signed;
+		return signedTx;
 	}
 
 	// @ts-ignore

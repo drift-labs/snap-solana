@@ -1,18 +1,18 @@
 {
 	"name": "@drift-labs/snap-wallet-adapter",
 	"version": "1.0.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/drift-labs/snap-solana"
-  },
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/drift-labs/snap-solana"
+	},
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"files": [
 		"dist"
 	],
 	"scripts": {
-    "preinstall": "yarn run prebuild",
-    "prebuild": "node -p \"'export const SNAP_VERSION = ' + JSON.stringify(require('../snap/package.json').version) + ';'\" > src/version.ts",
+		"preinstall": "yarn run prebuild",
+		"prebuild": "node -p \"'export const SNAP_VERSION = ' + JSON.stringify(require('../snap/package.json').version) + ';'\" > src/version.ts",
 		"build": "rm -rf dist && tsc"
 	},
 	"license": "MIT",
@@ -22,6 +22,7 @@
 		"typescript": "^5.0.4"
 	},
 	"devDependencies": {
-		"@metamask/providers": "^11.0.0"
+		"@metamask/providers": "^11.0.0",
+		"prettier": "^2.8.8"
 	}
 }

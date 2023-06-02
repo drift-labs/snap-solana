@@ -21,8 +21,6 @@ const helloWorldHandler = (origin: string) => {
 };
 
 const showPublicKeyHandler = async () => {
-	// Do we want this keypair index to be based on which metamask wallet index is selected?
-	// Not sure if/how to do that but might be ideal... probably not worth it for initial MVP though
 	const keypair = await deriveSolanaKeypair();
 
 	return snap.request({
@@ -45,50 +43,90 @@ const getPublicKeyHandler = async () => {
 	return keypair?.publicKey?.toString();
 };
 
-
-interface signTransactionParams {
-  origin: string;
-  transaction: number[] | Uint8Array | Buffer;
+type TransactionParams = {
+  /**
+   * JSON.stringified buffer (serialized solana tx)
+   */
+  transaction: Record<string, number>;
   serializeConfig?: SerializeConfig;
 }
 
+type SignTransactionParams = {
+  origin: string
+} & TransactionParams
+
 /**
- * Signs a single Solana transaction, serialized
+ * Signs a single Solana transaction
  */
-const signTransactionHandler = async (params: signTransactionParams) => {
-  throw new Error('example error');
-  
-	const confirmed = await snap.request({
-		method: 'snap_dialog',
-		params: {
-			type: 'confirmation',
-			content: panel([
-				text(`**${params.origin}** would like to sign a transaction`),
-			]),
-		},
-	});
+const signTransactionHandler = async (params: SignTransactionParams) => {
+  try {
+    // Somehow params.transaction gets changed into an keyed object instead of an array when being sent through the json rpc... weird.
+    const byteArray = Object.keys(params.transaction).map(key => params.transaction[key]);
+    const buf = Buffer.from(byteArray);
+    const tx = Transaction.from(buf);
 
-  if (confirmed) {
-    const keypair = await deriveSolanaKeypair() as Keypair;
-
-    // TODO: Make sure the tx is unserialized correctly:
-    const tx = Transaction.from(Buffer.from(params.transaction));
-
-    tx.sign(keypair);
-
-    const signatures = tx.signatures;
-    const signedTransaction = tx.serialize(params?.serializeConfig);
-
-    return JSON.stringify({
-      signatures,
-      transaction: signedTransaction
+    // How can we make this message more user-friendly?
+    const confirmed = await snap.request({
+      method: 'snap_dialog',
+      params: {
+        type: 'confirmation',
+        content: panel([
+          text(`**${params.origin}** would like to sign a transaction:`),
+          text(JSON.stringify(tx))
+        ]),
+      },
     });
+
+    if (confirmed) {
+      const keypair = await deriveSolanaKeypair() as Keypair;
+
+      tx.sign(keypair);
+
+      const signatures = tx.signatures;
+      const signedTransaction = tx.serialize(params?.serializeConfig);
+
+      // For debugging:
+      // await snap.request({
+      //   method: 'snap_dialog',
+      //   params: {
+      //     type: 'confirmation',
+      //     content: panel([
+      //       text(`Ok to return?`),
+      //       text(JSON.stringify(tx)),
+      //       text(JSON.stringify(tx.signatures))
+      //     ]),
+      //   },
+      // });
+
+      return {
+        signatures: signatures.map(sig => ({
+          publicKey: sig.publicKey.toString(),
+          signature: sig.signature?.toJSON()
+        })),
+        transaction: signedTransaction.toJSON()
+      };
+    } else {
+      throw new Error('User rejected transaction');
+    }
+  } catch (err) {
+    // For debugging:
+    // await snap.request({
+    //   method: 'snap_dialog',
+    //   params: {
+    //     type: 'confirmation',
+    //     content: panel([
+    //       text(`${err}`),
+    //       text(`${JSON.stringify(params)}`)
+    //     ]),
+    //   },
+    // });
   }
 };
 
 
-interface signAllTransactionsParams {
-  transactions: signTransactionParams[]
+type signAllTransactionsParams = {
+  origin: string;
+  transactions: TransactionParams[]
 }
 
 /**
@@ -126,10 +164,20 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 			return await getPublicKeyHandler();
 
     case "signTransaction":
-      return await signTransactionHandler({ origin, transaction: request?.transaction, serializeConfig: request?.serializeConfig });
+      return await signTransactionHandler({ 
+        origin,
+        // @ts-ignore
+        transaction: request?.params?.transaction,
+        // @ts-ignore
+        serializeConfig: request?.params?.serializeConfig
+      });
 
     case "signAllTransactions": 
-      return await signAllTransactionsHandler({ transactions: request?.transactions });
+      return await signAllTransactionsHandler({ 
+        origin,
+        // @ts-ignore
+        transactions: request?.params?.transactions 
+      });
 
 		default:
 			throw new Error('Method not found.');
