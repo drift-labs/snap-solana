@@ -71,20 +71,21 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
   public async signTransaction(tx: Transaction | VersionedTransaction) {
     const isVersionedTx = isVersionedTransaction(tx);
 
-    const serialized = tx.serialize(isVersionedTx ? undefined : {
+    const serializeConfig = isVersionedTx ? undefined : {
       requireAllSignatures: false,
       verifySignatures: false,
-    });
+    }
+
+    const serialized = tx.serialize(serializeConfig);
 
     const rpcRequestObject = {
       method: "signTransaction",
       params: {
         transaction: serialized,
-        isVersionedTransaction: isVersionedTx
+        isVersionedTransaction: isVersionedTx,
+        serializeConfig
       },
     };
-    
-    console.log('rpc request', rpcRequestObject);
 
     const results = (await window.ethereum.request({
       method: "wallet_invokeSnap",
@@ -104,13 +105,7 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
     } else {
       returnTx = Transaction.from(Buffer.from(results?.transaction?.data));
     }
-
-    // Might not need this? Could be useful for debugging though
-    // const _signatures = results?.signatures?.map((sig) => ({
-    //   publicKey: sig.publicKey,
-    //   signature: Buffer.from(sig.signature.data),
-    // }));
-
+    
     return returnTx;
   }
 
@@ -118,12 +113,22 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
   public async signAllTransactions(
     txes: (Transaction | VersionedTransaction)[]
   ) {
-    const serialized = txes.map((tx) =>
-      tx.serialize({
-        requireAllSignatures: false,
-        verifySignatures: false,
-      })
-    );
+    const serialized = txes.map((tx) => {
+      const isVersionedTx = isVersionedTransaction(tx);
+
+      const serializeConfig = isVersionedTx ? undefined : {
+          requireAllSignatures: false,
+          verifySignatures: false,
+        }
+
+      const serializedTx = tx.serialize(serializeConfig);
+
+      return {
+        isVersionedTransaction: isVersionedTx,
+        transaction: serializedTx,
+        serializeConfig
+      }
+    });
 
     const rpcRequestObject = {
       method: "signAllTransactions",
@@ -142,8 +147,7 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
 
     // De-serialize results:
     const signedTxes = results.map((result, index) => {
-      console.log(result);
-      if (txes[index] instanceof VersionedTransaction) {
+      if (isVersionedTransaction(txes[index])) {
         return VersionedTransaction.deserialize(
           Buffer.from(result?.transaction?.data)
         );
@@ -169,8 +173,6 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
     const installedSnaps = (await window.ethereum.request({
       method: "wallet_getSnaps",
     })) as GetSnapsResponse;
-
-    // console.log('installedSnaps', JSON.stringify(installedSnaps));
 
     // If snap is not installed or version is outdated, ask to (re)install it
     if (

@@ -4,13 +4,12 @@ import {
   Keypair,
   SerializeConfig,
   Transaction,
-  VersionedMessage,
   VersionedTransaction,
 } from "@solana/web3.js";
 import { deriveSolanaKeypair } from "./keypair";
 
 // Simple switch for debugging, will show errors in a snap dialog
-const DEBUG = true;
+const DEBUG = false;
 
 const showDebugDialog = (err: any) => {
   snap.request({
@@ -93,8 +92,6 @@ const signTransactionHandler = async (params: SignTransactionParams) => {
     const buf = Buffer.from(byteArray);
 
     if (params.isVersionedTransaction) {
-      // const message = VersionedMessage.deserialize(buf);
-      // const tx = new VersionedTransaction(message);
       const tx = VersionedTransaction.deserialize(buf);
 
       // How can we make this message more user-friendly?
@@ -114,14 +111,9 @@ const signTransactionHandler = async (params: SignTransactionParams) => {
 
         tx.sign([keypair]);
 
-        // const signatures = tx.signatures;
         const signedTransaction = Buffer.from(tx.serialize());
 
         return {
-          // signatures: signatures.map((sig) => ({
-          //   publicKey: sig.publicKey.toString(),
-          //   signature: sig.signature?.toJSON(),
-          // })),
           transaction: signedTransaction.toJSON(),
         };
       } else {
@@ -183,8 +175,6 @@ type signAllTransactionsParams = {
 const signAllTransactionsHandler = async (
   params: signAllTransactionsParams
 ) => {
-  const _keypair = (await deriveSolanaKeypair()) as Keypair;
-
   try {
     // Turn all JSON params into Transaction objects
     const transactions = params.transactions.map((paramTx) => {
@@ -192,8 +182,11 @@ const signAllTransactionsHandler = async (
         (key) => paramTx.transaction[key]
       );
       const buf = Buffer.from(byteArray);
-      const tx = Transaction.from(buf);
-      return tx;
+      if (paramTx.isVersionedTransaction) {
+        return VersionedTransaction.deserialize(buf);
+      } else {
+        return Transaction.from(buf);
+      }
     });
 
     // How can we make this message more user-friendly?
@@ -213,22 +206,36 @@ const signAllTransactionsHandler = async (
     if (confirmed) {
       const keypair = (await deriveSolanaKeypair()) as Keypair;
 
-      const signed = transactions.map((tx, index) => {
-        tx.sign(keypair);
-        const signatures = tx.signatures;
-        const serializeConfig = params.transactions[index]?.serializeConfig;
-        const signedTransaction = tx.serialize(serializeConfig);
+      const signed = transactions.map((_tx, index) => {
+        const isVersionedTransaction = params.transactions[index].isVersionedTransaction;
 
-        return {
-          signatures: signatures.map((sig) => ({
-            publicKey: sig.publicKey.toString(),
-            signature: sig.signature?.toJSON(),
-          })),
-          transaction: signedTransaction.toJSON(),
-        };
+        if (isVersionedTransaction) {
+          const tx = _tx as VersionedTransaction;
+          tx.sign([keypair]);
+
+          const signedTransaction = Buffer.from(tx.serialize());
+
+          return {
+            transaction: signedTransaction.toJSON(),
+          }
+        } else {
+          const tx = _tx as Transaction;
+          tx.sign(keypair);
+          const signatures = tx.signatures;
+          const serializeConfig = params.transactions[index].serializeConfig;
+          const signedTransaction = tx.serialize(serializeConfig);
+
+          return {
+            signatures: signatures.map((sig) => ({
+              publicKey: sig.publicKey.toString(),
+              signature: sig.signature?.toJSON(),
+            })),
+            transaction: signedTransaction.toJSON(),
+          };
+        }
       });
 
-      return signed;
+      return signed
     } else {
       throw new Error("User rejected transaction");
     }
