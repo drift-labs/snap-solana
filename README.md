@@ -8,7 +8,7 @@ This repo contains a [Metamask Snap]((https://docs.metamask.io/snaps/)) that all
 
 ### Setting up the project:
 <br>
-`cd snap && yarn`<br>
+`cd snap && yarn && yarn build-webpack-plugin`<br>
 `cd snap-wallet-adapter && yarn`
 <br><br>
 

@@ -1,42 +1,44 @@
-import { OnRpcRequestHandler } from '@metamask/snaps-types';
-import { panel, text } from '@metamask/snaps-ui';
-import { Keypair, SerializeConfig, Transaction } from '@solana/web3.js';
-import { deriveSolanaKeypair } from './keypair';
+import { OnRpcRequestHandler } from "@metamask/snaps-types";
+import { panel, text } from "@metamask/snaps-ui";
+import {
+  Keypair,
+  SerializeConfig,
+  Transaction,
+  VersionedMessage,
+  VersionedTransaction,
+} from "@solana/web3.js";
+import { deriveSolanaKeypair } from "./keypair";
 
 // Simple switch for debugging, will show errors in a snap dialog
-const DEBUG = false;
+const DEBUG = true;
 
 const showDebugDialog = (err: any) => {
   snap.request({
-		method: 'snap_dialog',
-		params: {
-			type: 'alert',
-			content: panel([
-				text(`${err}`),
-			]),
-		},
-	});
+    method: "snap_dialog",
+    params: {
+      type: "alert",
+      content: panel([text(`${err}`)]),
+    },
+  });
 };
-
 
 /**
  * Shows the Solana public key in Metamask, mostly just for testing
  */
 const showPublicKeyHandler = async () => {
-	const keypair = await deriveSolanaKeypair();
+  const keypair = await deriveSolanaKeypair();
 
-	return snap.request({
-		method: 'snap_dialog',
-		params: {
-			type: 'alert',
-			content: panel([
-				text(`Your Solana public key: `),
-				text(`${keypair?.publicKey.toString()}`),
-			]),
-		},
-	});
+  return snap.request({
+    method: "snap_dialog",
+    params: {
+      type: "alert",
+      content: panel([
+        text(`Your Solana public key: `),
+        text(`${keypair?.publicKey.toString()}`),
+      ]),
+    },
+  });
 };
-
 
 /**
  * Returns the public key for use in the UI that Metmask is connected to
@@ -53,7 +55,6 @@ const getPublicKeyHandler = async () => {
   }
 };
 
-
 /**
  * A Transaction param for signing
  */
@@ -67,55 +68,98 @@ type TransactionParams = {
    * A Solana SerializeConfig to be used with the transaction when serializing the signed transaction.
    */
   serializeConfig?: SerializeConfig;
-}
 
+  /**
+   * testing
+   */
+  isVersionedTransaction?: boolean;
+};
 
 /**
  * All parameters for for signTransactionHandler
  */
 type SignTransactionParams = {
-  origin: string
-} & TransactionParams
-
+  origin: string;
+} & TransactionParams;
 
 /**
  * Signs a single Solana transaction
  */
 const signTransactionHandler = async (params: SignTransactionParams) => {
   try {
-    const byteArray = Object.keys(params.transaction).map(key => params.transaction[key]);
+    const byteArray = Object.keys(params.transaction).map(
+      (key) => params.transaction[key]
+    );
     const buf = Buffer.from(byteArray);
-    const tx = Transaction.from(buf);
 
-    // How can we make this message more user-friendly?
-    const confirmed = await snap.request({
-      method: 'snap_dialog',
-      params: {
-        type: 'confirmation',
-        content: panel([
-          text(`**${params.origin}** would like to sign a transaction:`),
-          text(JSON.stringify(tx))
-        ]),
-      },
-    });
+    if (params.isVersionedTransaction) {
+      // const message = VersionedMessage.deserialize(buf);
+      // const tx = new VersionedTransaction(message);
+      const tx = VersionedTransaction.deserialize(buf);
 
-    if (confirmed) {
-      const keypair = await deriveSolanaKeypair() as Keypair;
+      // How can we make this message more user-friendly?
+      const confirmed = await snap.request({
+        method: "snap_dialog",
+        params: {
+          type: "confirmation",
+          content: panel([
+            text(`**${params.origin}** would like to sign a transaction:`),
+            text(JSON.stringify(tx)),
+          ]),
+        },
+      });
 
-      tx.sign(keypair);
+      if (confirmed) {
+        const keypair = (await deriveSolanaKeypair()) as Keypair;
 
-      const signatures = tx.signatures;
-      const signedTransaction = tx.serialize(params?.serializeConfig);
+        tx.sign([keypair]);
 
-      return {
-        signatures: signatures.map(sig => ({
-          publicKey: sig.publicKey.toString(),
-          signature: sig.signature?.toJSON()
-        })),
-        transaction: signedTransaction.toJSON()
-      };
+        // const signatures = tx.signatures;
+        const signedTransaction = Buffer.from(tx.serialize());
+
+        return {
+          // signatures: signatures.map((sig) => ({
+          //   publicKey: sig.publicKey.toString(),
+          //   signature: sig.signature?.toJSON(),
+          // })),
+          transaction: signedTransaction.toJSON(),
+        };
+      } else {
+        throw new Error("User rejected transaction");
+      }
     } else {
-      throw new Error('User rejected transaction');
+      const tx = Transaction.from(buf);
+
+      // How can we make this message more user-friendly?
+      const confirmed = await snap.request({
+        method: "snap_dialog",
+        params: {
+          type: "confirmation",
+          content: panel([
+            text(`**${params.origin}** would like to sign a transaction:`),
+            text(JSON.stringify(tx)),
+          ]),
+        },
+      });
+
+      if (confirmed) {
+        const keypair = (await deriveSolanaKeypair()) as Keypair;
+
+        tx.sign(keypair);
+
+        const signatures = tx.signatures;
+        const signedTransaction = tx.serialize(params?.serializeConfig);
+
+        return {
+          signatures: signatures.map((sig) => ({
+            publicKey: sig.publicKey.toString(),
+            signature: sig.signature?.toJSON(),
+          })),
+          transaction: signedTransaction.toJSON(),
+        };
+      } else {
+        throw new Error("User rejected transaction");
+      }
     }
   } catch (err) {
     if (DEBUG) {
@@ -125,26 +169,28 @@ const signTransactionHandler = async (params: SignTransactionParams) => {
   }
 };
 
-
 /**
  * All parameters for signAllTransactionsHandler
  */
 type signAllTransactionsParams = {
   origin: string;
-  transactions: TransactionParams[]
-}
-
+  transactions: TransactionParams[];
+};
 
 /**
  * Signs all Solana transactions in params.transactions
  */
-const signAllTransactionsHandler = async (params: signAllTransactionsParams) => {
-  const _keypair = await deriveSolanaKeypair() as Keypair;
+const signAllTransactionsHandler = async (
+  params: signAllTransactionsParams
+) => {
+  const _keypair = (await deriveSolanaKeypair()) as Keypair;
 
   try {
     // Turn all JSON params into Transaction objects
-    const transactions = params.transactions.map(paramTx => {
-      const byteArray = Object.keys(paramTx.transaction).map(key => paramTx.transaction[key]);
+    const transactions = params.transactions.map((paramTx) => {
+      const byteArray = Object.keys(paramTx.transaction).map(
+        (key) => paramTx.transaction[key]
+      );
       const buf = Buffer.from(byteArray);
       const tx = Transaction.from(buf);
       return tx;
@@ -152,18 +198,20 @@ const signAllTransactionsHandler = async (params: signAllTransactionsParams) => 
 
     // How can we make this message more user-friendly?
     const confirmed = await snap.request({
-      method: 'snap_dialog',
+      method: "snap_dialog",
       params: {
-        type: 'confirmation',
+        type: "confirmation",
         content: panel([
-          text(`**${params.origin}** would like to sign the following transactions:`),
-          ...transactions.map(tx => text(JSON.stringify(tx)))
+          text(
+            `**${params.origin}** would like to sign the following transactions:`
+          ),
+          ...transactions.map((tx) => text(JSON.stringify(tx))),
         ]),
       },
     });
 
     if (confirmed) {
-      const keypair = await deriveSolanaKeypair() as Keypair;
+      const keypair = (await deriveSolanaKeypair()) as Keypair;
 
       const signed = transactions.map((tx, index) => {
         tx.sign(keypair);
@@ -172,17 +220,17 @@ const signAllTransactionsHandler = async (params: signAllTransactionsParams) => 
         const signedTransaction = tx.serialize(serializeConfig);
 
         return {
-          signatures: signatures.map(sig => ({
+          signatures: signatures.map((sig) => ({
             publicKey: sig.publicKey.toString(),
-            signature: sig.signature?.toJSON()
+            signature: sig.signature?.toJSON(),
           })),
-          transaction: signedTransaction.toJSON()
+          transaction: signedTransaction.toJSON(),
         };
       });
 
       return signed;
     } else {
-      throw new Error('User rejected transaction');
+      throw new Error("User rejected transaction");
     }
   } catch (err) {
     if (DEBUG) {
@@ -191,7 +239,6 @@ const signAllTransactionsHandler = async (params: signAllTransactionsParams) => 
     throw err;
   }
 };
-
 
 /**
  * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
@@ -204,32 +251,33 @@ const signAllTransactionsHandler = async (params: signAllTransactionsParams) => 
  * @throws If the request method is not valid for this snap.
  */
 export const onRpcRequest: OnRpcRequestHandler = async ({
-	origin,
-	request,
+  origin,
+  request,
 }) => {
   const params = request?.params as Record<string, any>;
 
-	switch (request.method) {
-		case 'showPublicKey':
-			return await showPublicKeyHandler();
+  switch (request.method) {
+    case "showPublicKey":
+      return await showPublicKeyHandler();
 
-		case 'getPublicKey':
-			return await getPublicKeyHandler();
+    case "getPublicKey":
+      return await getPublicKeyHandler();
 
     case "signTransaction":
-      return await signTransactionHandler({ 
+      return await signTransactionHandler({
         origin,
         transaction: params?.transaction,
-        serializeConfig: params?.serializeConfig
+        serializeConfig: params?.serializeConfig,
+        isVersionedTransaction: params?.isVersionedTransaction,
       });
 
-    case "signAllTransactions": 
-      return await signAllTransactionsHandler({ 
+    case "signAllTransactions":
+      return await signAllTransactionsHandler({
         origin,
-        transactions: params?.transactions 
+        transactions: params?.transactions,
       });
 
-		default:
-			throw new Error('Method not found.');
-	}
+    default:
+      throw new Error("Method not found.");
+  }
 };
