@@ -11,8 +11,7 @@
 		"dist"
 	],
 	"scripts": {
-		"preinstall": "yarn run prebuild",
-		"prebuild": "node -p \"'export const SNAP_VERSION = ' + JSON.stringify(require('../snap/package.json').version) + ';'\" > src/version.ts",
+		"prebuild": "ts-node ./prebuild.ts",
 		"build": "rm -rf dist && tsc"
 	},
 	"license": "MIT",
@@ -23,6 +22,7 @@
 	},
 	"devDependencies": {
 		"@metamask/providers": "^11.0.0",
-		"prettier": "^2.8.8"
+		"prettier": "^2.8.8",
+		"ts-node": "^10.9.1"
 	}
 }

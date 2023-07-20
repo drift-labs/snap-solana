@@ -10,6 +10,28 @@ const isProduction = process.env.NODE_ENV == 'production';
 
 const WebpackShellPluginNext = require('webpack-shell-plugin-next');
 
+const plugins = [
+  new webpack.ProvidePlugin({
+    Buffer: ['buffer', 'Buffer'],
+  }),
+  new SnapsWebpackPlugin({
+    stripComments: true,
+  })
+];
+
+if (!isProduction) {
+  plugins.push(
+    // @ts-ignore
+    new WebpackShellPluginNext({
+			onBuildEnd: {
+				scripts: ['yarn serve'],
+				blocking: false,
+				parallel: true,
+			},
+		})
+  );
+}
+
 const config = {
 	entry: './src/index.ts',
 	output: {
@@ -25,22 +47,7 @@ const config = {
 		maxEntrypointSize: 2000000,
 		maxAssetSize: 2000000,
 	},
-	plugins: [
-		new webpack.ProvidePlugin({
-			Buffer: ['buffer', 'Buffer'],
-		}),
-		new SnapsWebpackPlugin({
-			stripComments: true,
-		}),
-		// @ts-ignore
-		new WebpackShellPluginNext({
-			onBuildEnd: {
-				scripts: ['yarn serve'],
-				blocking: false,
-				parallel: true,
-			},
-		}),
-	],
+	plugins,
 	module: {
 		rules: [
 			{
