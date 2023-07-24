@@ -1,5 +1,5 @@
 import { OnRpcRequestHandler } from "@metamask/snaps-types";
-import { panel, text } from "@metamask/snaps-ui";
+import { Text, heading, panel, text } from "@metamask/snaps-ui";
 import {
   Keypair,
   SerializeConfig,
@@ -94,14 +94,29 @@ const signTransactionHandler = async (params: SignTransactionParams) => {
     if (params.isVersionedTransaction) {
       const tx = VersionedTransaction.deserialize(buf);
 
+      const instructionDetailsText: Text[] = [];
+
+      tx.message.compiledInstructions.forEach((instruction, index) => {
+        const programIndex = instruction.programIdIndex;
+        const accountKeys = tx.message.getAccountKeys();
+        const programAccountKey = accountKeys.get(programIndex);
+        const programId = programAccountKey?.toString() || "unknown";
+        const data = instruction.data?.toString() || '';
+
+        instructionDetailsText.push(text('\n'))
+        instructionDetailsText.push(text(`**Instruction #${index + 1}**`))
+        instructionDetailsText.push(text(`**Program:** ${programId}`))
+        instructionDetailsText.push(text(`**Data:** [${data}]`))
+      });
+
       // How can we make this message more user-friendly?
       const confirmed = await snap.request({
         method: "snap_dialog",
         params: {
           type: "confirmation",
           content: panel([
-            text(`**${params.origin}** would like to sign a transaction:`),
-            text(JSON.stringify(tx)),
+            heading(`${params.origin} wants you to approve a transaction:`),
+            ...instructionDetailsText,
           ]),
         },
       });
@@ -122,14 +137,25 @@ const signTransactionHandler = async (params: SignTransactionParams) => {
     } else {
       const tx = Transaction.from(buf);
 
+      const instructionDetailsText: Text[] = [];
+      tx.instructions.forEach((instruction, index) => {
+        const programId = instruction.programId?.toString() || 'unknown';
+        const data = instruction.data?.toJSON()?.data;
+
+        instructionDetailsText.push(text('\n'));
+        instructionDetailsText.push(text(`**Instruction #${index + 1}**`));
+        instructionDetailsText.push(text(`**Program:** ${programId}`));
+        instructionDetailsText.push(text(`**Data:** [${data?.toString() || ''}]`));
+      });
+
       // How can we make this message more user-friendly?
       const confirmed = await snap.request({
         method: "snap_dialog",
         params: {
           type: "confirmation",
           content: panel([
-            text(`**${params.origin}** would like to sign a transaction:`),
-            text(JSON.stringify(tx)),
+            heading(`${params.origin} wants you to approve a transaction:`),
+            ...instructionDetailsText
           ]),
         },
       });
@@ -176,29 +202,65 @@ const signAllTransactionsHandler = async (
   params: signAllTransactionsParams
 ) => {
   try {
+    const instructionDetailsText: Text[] = [];
+
     // Turn all JSON params into Transaction objects
-    const transactions = params.transactions.map((paramTx) => {
+    const transactions = params.transactions.map((paramTx, txIndex) => {
       const byteArray = Object.keys(paramTx.transaction).map(
         (key) => paramTx.transaction[key]
       );
       const buf = Buffer.from(byteArray);
+
+      if (txIndex > 0 ) {
+        instructionDetailsText.push(text('\n'));
+      }
+      instructionDetailsText.push(text(`**Transaction ${txIndex + 1}**`));
+
       if (paramTx.isVersionedTransaction) {
-        return VersionedTransaction.deserialize(buf);
+        const tx =  VersionedTransaction.deserialize(buf);
+
+        // Pretty print tx + instruction details
+        tx.message.compiledInstructions.forEach((instruction, index) => {
+          const programIndex = instruction.programIdIndex;
+          const accountKeys = tx.message.getAccountKeys();
+          const programAccountKey = accountKeys.get(programIndex);
+          const programId = programAccountKey?.toString() || "unknown"
+          const data = instruction.data?.toString() || ''
+
+          instructionDetailsText.push(text('\n'));  
+          instructionDetailsText.push(text(`**Instruction #${index + 1}**`))
+          instructionDetailsText.push(text(`**Program:** ${programId}`))
+          instructionDetailsText.push(text(`**Data:** [${data}]`))
+        })
+
+        return tx;
       } else {
-        return Transaction.from(buf);
+        const tx = Transaction.from(buf);
+
+        // Pretty print tx + instruction details
+        tx.instructions.forEach((instruction, index) => {
+          const programId = instruction.programId?.toString() || 'unknown';
+          const data = instruction.data?.toString() || ''
+
+          instructionDetailsText.push(text('\n'));  
+          instructionDetailsText.push(text(`**Instruction #${index + 1}**`))
+          instructionDetailsText.push(text(`**Program:** ${programId}`))
+          instructionDetailsText.push(text(`**Data:** [${data}]`))
+        });
+
+        return tx;
       }
     });
 
-    // How can we make this message more user-friendly?
     const confirmed = await snap.request({
       method: "snap_dialog",
       params: {
         type: "confirmation",
         content: panel([
-          text(
-            `**${params.origin}** would like to sign the following transactions:`
+          heading(
+            `${params.origin} wants you to approve ${transactions.length} transactions:`
           ),
-          ...transactions.map((tx) => text(JSON.stringify(tx))),
+          ...instructionDetailsText,
         ]),
       },
     });
