@@ -1,5 +1,5 @@
 import { OnRpcRequestHandler } from "@metamask/snaps-types";
-import { Text, heading, panel, text } from "@metamask/snaps-ui";
+import { Text, divider, heading, panel, text } from "@metamask/snaps-ui";
 import {
   Keypair,
   SerializeConfig,
@@ -101,7 +101,7 @@ const signTransactionHandler = async (params: SignTransactionParams) => {
         const accountKeys = tx.message.getAccountKeys();
         const programAccountKey = accountKeys.get(programIndex);
         const programId = programAccountKey?.toString() || "unknown";
-        const data = instruction.data?.toString() || '';
+        const data = instruction.data ? Buffer.from(instruction.data)?.toString('base64') : '';
 
         instructionDetailsText.push(text('\n'))
         instructionDetailsText.push(text(`**Instruction #${index + 1}**`))
@@ -140,12 +140,12 @@ const signTransactionHandler = async (params: SignTransactionParams) => {
       const instructionDetailsText: Text[] = [];
       tx.instructions.forEach((instruction, index) => {
         const programId = instruction.programId?.toString() || 'unknown';
-        const data = instruction.data?.toJSON()?.data;
+        const data = instruction.data.toString('base64');
 
         instructionDetailsText.push(text('\n'));
         instructionDetailsText.push(text(`**Instruction #${index + 1}**`));
         instructionDetailsText.push(text(`**Program:** ${programId}`));
-        instructionDetailsText.push(text(`**Data:** [${data?.toString() || ''}]`));
+        instructionDetailsText.push(text(`**Data:** ${data}`));
       });
 
       // How can we make this message more user-friendly?
@@ -211,9 +211,7 @@ const signAllTransactionsHandler = async (
       );
       const buf = Buffer.from(byteArray);
 
-      if (txIndex > 0 ) {
-        instructionDetailsText.push(text('\n'));
-      }
+      instructionDetailsText.push(divider());
       instructionDetailsText.push(text(`**Transaction ${txIndex + 1}**`));
 
       if (paramTx.isVersionedTransaction) {
@@ -225,12 +223,12 @@ const signAllTransactionsHandler = async (
           const accountKeys = tx.message.getAccountKeys();
           const programAccountKey = accountKeys.get(programIndex);
           const programId = programAccountKey?.toString() || "unknown"
-          const data = instruction.data?.toString() || ''
+          const data = instruction.data ? Buffer.from(instruction.data)?.toString('base64') : '';
 
           instructionDetailsText.push(text('\n'));  
           instructionDetailsText.push(text(`**Instruction #${index + 1}**`))
           instructionDetailsText.push(text(`**Program:** ${programId}`))
-          instructionDetailsText.push(text(`**Data:** [${data}]`))
+          instructionDetailsText.push(text(`**Data:** ${data}`))
         })
 
         return tx;
@@ -240,12 +238,12 @@ const signAllTransactionsHandler = async (
         // Pretty print tx + instruction details
         tx.instructions.forEach((instruction, index) => {
           const programId = instruction.programId?.toString() || 'unknown';
-          const data = instruction.data?.toString() || ''
+          const data = instruction.data?.toString('base64') || ''
 
           instructionDetailsText.push(text('\n'));  
           instructionDetailsText.push(text(`**Instruction #${index + 1}**`))
           instructionDetailsText.push(text(`**Program:** ${programId}`))
-          instructionDetailsText.push(text(`**Data:** [${data}]`))
+          instructionDetailsText.push(text(`**Data:** ${data}`))
         });
 
         return tx;

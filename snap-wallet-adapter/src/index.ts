@@ -50,17 +50,24 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
   supportedTransactionVersions?: ReadonlySet<TransactionVersion>;
   snapId: string;
   icon = metamaskIcon;
+  versionToUse = SNAP_VERSION;
+
+  public static readonly defaultVersion = SNAP_VERSION;
 
   public static icon = metamaskIcon;
 
   public publicKey: PublicKey;
   public autoApprove: boolean;
 
-  public constructor({ snapId, url }: { snapId: string; url: string }) {
+  public constructor({ snapId, url, version }: { snapId: string; url: string, version?: string }) {
     super();
 
     this.snapId = snapId;
     this.url = url;
+
+    if (version) {
+      this.versionToUse = version;
+    }
   }
 
   public async signMessage(_message: Uint8Array): Promise<Uint8Array> {
@@ -177,7 +184,7 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
     // If snap is not installed or version is outdated, ask to (re)install it
     if (
       !installedSnaps[this.snapId] ||
-      installedSnaps[this.snapId]?.version !== SNAP_VERSION ||
+      installedSnaps[this.snapId]?.version !== this.versionToUse ||
       forceUpdate
     ) {
       // console.log('snap needs to be installed/updated');
@@ -185,7 +192,7 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
         method: "wallet_requestSnaps",
         params: {
           [this.snapId]: {
-            version: SNAP_VERSION,
+            version: this.versionToUse,
           },
         },
       });

@@ -1,8 +1,7 @@
 {
   "name": "@drift-labs/snap-solana",
-  "version": "1.0.0",
-  "private": true,
-  "description": "A metamask snap for interacting with Solana dApps",
+  "version": "0.1.0-beta-0",
+  "description": "A Metamask snap for interacting with Solana dApps",
   "repository": {
     "type": "git",
     "url": "https://github.com/drift-labs/snap-solana"
