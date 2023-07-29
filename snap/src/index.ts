@@ -12,8 +12,8 @@ import { deriveSolanaKeypair } from "./keypair";
 const DEBUG = false;
 
 const showDebugDialog = (err: any) => {
-  snap.request({
-    method: "snap_dialog",
+snap.request({
+method: "snap_dialog",
     params: {
       type: "alert",
       content: panel([text(`${err}`)]),
@@ -223,7 +223,8 @@ const signAllTransactionsHandler = async (
           const accountKeys = tx.message.getAccountKeys();
           const programAccountKey = accountKeys.get(programIndex);
           const programId = programAccountKey?.toString() || "unknown"
-          const data = instruction.data ? Buffer.from(instruction.data)?.toString('base64') : '';
+          
+        const data = instruction.data ? Buffer.from(instruction.data)?.toString('base64') : '';
 
           instructionDetailsText.push(text('\n'));  
           instructionDetailsText.push(text(`**Instruction #${index + 1}**`))
