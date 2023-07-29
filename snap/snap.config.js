@@ -23,7 +23,7 @@ module.exports = {
           this.push("globalThis.Buffer = require('buffer/').Buffer;");
           this.push(data);
           callback();
-        }
+        },
       );
     });
   },

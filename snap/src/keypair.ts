@@ -6,9 +6,9 @@ const derivationPathBase = ['m', "44'", "501'", "0'"];
 const curve = 'ed25519';
 
 /**
- * Derives a solana keypair from the user's Metamask seed phrase using the ed25519 curve and path [m/44'/501'/0'/0'] 
+ * Derives a solana keypair from the user's Metamask seed phrase using the ed25519 curve and path [m/44'/501'/0'/0']
  * (Same thing used by phantom, etc.)
- * 
+ *
  * For security, this should PROBABLY be done on the fly each time a request is made to the snap where the user needs to sign something.
  * That way, we never store the private key anywhere bsides in a variable, it's just used to sign once, then garbage collected.
  * Should be better for security than deriving it once and storing it somewhere.

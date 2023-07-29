@@ -59,7 +59,15 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
   public publicKey: PublicKey;
   public autoApprove: boolean;
 
-  public constructor({ snapId, url, version }: { snapId: string; url: string, version?: string }) {
+  public constructor({
+    snapId,
+    url,
+    version,
+  }: {
+    snapId: string;
+    url: string;
+    version?: string;
+  }) {
     super();
 
     this.snapId = snapId;
@@ -78,10 +86,12 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
   public async signTransaction(tx: Transaction | VersionedTransaction) {
     const isVersionedTx = isVersionedTransaction(tx);
 
-    const serializeConfig = isVersionedTx ? undefined : {
-      requireAllSignatures: false,
-      verifySignatures: false,
-    }
+    const serializeConfig = isVersionedTx
+      ? undefined
+      : {
+          requireAllSignatures: false,
+          verifySignatures: false,
+        };
 
     const serialized = tx.serialize(serializeConfig);
 
@@ -90,7 +100,7 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
       params: {
         transaction: serialized,
         isVersionedTransaction: isVersionedTx,
-        serializeConfig
+        serializeConfig,
       },
     };
 
@@ -112,7 +122,7 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
     } else {
       returnTx = Transaction.from(Buffer.from(results?.transaction?.data));
     }
-    
+
     return returnTx;
   }
 
@@ -123,18 +133,20 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
     const serialized = txes.map((tx) => {
       const isVersionedTx = isVersionedTransaction(tx);
 
-      const serializeConfig = isVersionedTx ? undefined : {
-          requireAllSignatures: false,
-          verifySignatures: false,
-        }
+      const serializeConfig = isVersionedTx
+        ? undefined
+        : {
+            requireAllSignatures: false,
+            verifySignatures: false,
+          };
 
       const serializedTx = tx.serialize(serializeConfig);
 
       return {
         isVersionedTransaction: isVersionedTx,
         transaction: serializedTx,
-        serializeConfig
-      }
+        serializeConfig,
+      };
     });
 
     const rpcRequestObject = {
