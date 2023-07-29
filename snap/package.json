@@ -1,60 +1,62 @@
 {
-  "name": "@drift-labs/snap-solana",
-  "version": "0.1.0-beta-0",
-  "description": "A Metamask snap for interacting with Solana dApps",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/drift-labs/snap-solana"
-  },
-  "license": "MIT",
-  "main": "src/index.ts",
-  "files": [
-    "dist/",
-    "images/",
-    "snap.manifest.json"
-  ],
-  "scripts": {
-    "build": "webpack --mode=production --node-env=production",
-    "build:clean": "yarn clean && yarn build",
-    "clean": "rimraf dist",
-    "watch": "webpack --watch",
-    "serve": "ts-node ./server.ts",
-    "build-webpack-plugin": "cd snaps-webpack-plugin && tsc && cd ..",
-    "dev": "yarn watch"
-  },
-  "dependencies": {
-    "@metamask/key-tree": "^7.0.0",
-    "@metamask/snaps-types": "^0.32.2",
-    "@metamask/snaps-ui": "^0.32.2",
-    "@solana/spl-token": "^0.3.7",
-    "@solana/web3.js": "^1.76.0",
-    "buffer": "^6.0.3"
-  },
-  "devDependencies": {
-    "@lavamoat/allow-scripts": "^2.0.3",
-    "@types/webpack": "^5.28.1",
-    "@types/webpack-sources": "^3.2.0",
-    "@typescript-eslint/eslint-plugin": "^6.2.0",
-    "@typescript-eslint/parser": "^6.2.0",
-    "@webpack-cli/generators": "^3.0.4",
-    "eslint": "^8.46.0",
-    "express": "^4.18.2",
-    "nodemon": "^2.0.22",
-    "rimraf": "^3.0.2",
-    "through2": "^4.0.2",
-    "ts-loader": "^9.4.2",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.0.4",
-    "webpack": "^5.83.1",
-    "webpack-cli": "^5.1.1",
-    "webpack-dev-server": "^4.15.0",
-    "webpack-shell-plugin-next": "^2.3.1"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
-  }
+	"name": "@drift-labs/snap-solana",
+	"version": "0.1.0-beta-0",
+	"description": "A Metamask snap for interacting with Solana dApps",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/drift-labs/snap-solana"
+	},
+	"license": "MIT",
+	"main": "src/index.ts",
+	"files": [
+		"dist/",
+		"images/",
+		"snap.manifest.json"
+	],
+	"scripts": {
+		"typecheck": "tsc --noEmit",
+		"lint": "eslint './**/*.{ts,tsx}'",
+		"build": "webpack --mode=production --node-env=production",
+		"build:clean": "yarn clean && yarn build",
+		"clean": "rimraf dist",
+		"watch": "webpack --watch",
+		"serve": "ts-node ./server.ts",
+		"build-webpack-plugin": "cd snaps-webpack-plugin && tsc && cd ..",
+		"dev": "yarn watch"
+	},
+	"dependencies": {
+		"@metamask/key-tree": "^7.0.0",
+		"@metamask/snaps-types": "^0.32.2",
+		"@metamask/snaps-ui": "^0.32.2",
+		"@solana/spl-token": "^0.3.7",
+		"@solana/web3.js": "^1.76.0",
+		"buffer": "^6.0.3"
+	},
+	"devDependencies": {
+		"@lavamoat/allow-scripts": "^2.0.3",
+		"@types/webpack": "^5.28.1",
+		"@types/webpack-sources": "^3.2.0",
+		"@typescript-eslint/eslint-plugin": "^6.2.0",
+		"@typescript-eslint/parser": "^6.2.0",
+		"@webpack-cli/generators": "^3.0.4",
+		"eslint": "^8.46.0",
+		"express": "^4.18.2",
+		"nodemon": "^2.0.22",
+		"rimraf": "^3.0.2",
+		"through2": "^4.0.2",
+		"ts-loader": "^9.4.2",
+		"ts-node": "^10.9.1",
+		"typescript": "^5.0.4",
+		"webpack": "^5.83.1",
+		"webpack-cli": "^5.1.1",
+		"webpack-dev-server": "^4.15.0",
+		"webpack-shell-plugin-next": "^2.3.1"
+	},
+	"engines": {
+		"node": ">=18.0.0"
+	},
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://registry.npmjs.org/"
+	}
 }
