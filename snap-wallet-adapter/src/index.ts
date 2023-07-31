@@ -17,8 +17,7 @@ import {
 // The snap id should probably have a default imported like this too
 import { SNAP_VERSION } from "./version";
 
-const metamaskIcon =
-  "https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/metamask-fox.svg";
+import metamaskIcon from "./icon";
 
 type BufferJson = {
   type: "Buffer";
