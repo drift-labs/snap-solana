@@ -1,0 +1,10 @@
+.idea
+.DS_Store
+node_modules
+**/node_modules
+**/.env.local
+.env
+**/*.tsbuildinfo
+lib
+**/*.log
+dist

@@ -1,0 +1,47 @@
+{
+  "name": "@drift-labs/snap-solana-core",
+  "version": "0.1.0",
+  "description": "Generic core functionality for creating a Solana snap",
+  "main": "dist/index.js",
+  "repository": "https://github.com/drift-labs/snap-solana",
+  "author": "Drift Labs",
+  "license": "MIT",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+		"lint": "eslint './**/*.{ts,tsx}'",
+		"build": "yarn clean && yarn lint && tsc",
+		"clean": "rimraf dist"
+  },
+	"dependencies": {
+		"@metamask/key-tree": "7.0.0",
+		"@metamask/snaps-types": "0.32.2",
+		"@metamask/snaps-ui": "0.32.2",
+		"@solana/spl-token": "0.3.7",
+		"@solana/web3.js": "1.76.0",
+		"buffer": "6.0.3"
+	},
+	"devDependencies": {
+		"@typescript-eslint/eslint-plugin": "^6.2.0",
+		"@typescript-eslint/parser": "^6.2.0",
+		"eslint": "^8.46.0",
+		"rimraf": "^3.0.2",
+		"through2": "^4.0.2",
+		"ts-loader": "^9.4.2",
+		"ts-node": "^10.9.1",
+		"typescript": "^5.0.4",
+		"webpack": "^5.83.1",
+		"webpack-cli": "^5.1.1",
+		"webpack-dev-server": "^4.15.0",
+		"webpack-shell-plugin-next": "^2.3.1"
+	},
+	"engines": {
+		"node": ">=18.0.0"
+	},
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://registry.npmjs.org/"
+	}
+}
