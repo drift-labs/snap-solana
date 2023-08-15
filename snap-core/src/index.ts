@@ -1,18 +1,12 @@
 import "@metamask/snaps-types";
 import { Text, divider, heading, panel, text } from "@metamask/snaps-ui";
 import {
-  Connection,
   Keypair,
   SerializeConfig,
-  SimulatedTransactionResponse,
   Transaction,
   VersionedTransaction,
 } from "@solana/web3.js";
 import { deriveSolanaKeypair } from "./keypair";
-
-const TRANSACTION_SIMULATION_RPC_URL = "https://api.mainnet-beta.solana.com ";
-
-const connection = new Connection(TRANSACTION_SIMULATION_RPC_URL, "confirmed");
 
 const DEBUG = false;
 
@@ -182,22 +176,6 @@ export const signTransactionHandler = async (params: SignTransactionParams) => {
         instructionDetailsText.push(text(`**Data:** [${data}]`));
       });
 
-      const simulationResultsText: Text[] = [];
-      let simulationResults;
-      try {
-        simulationResults = await connection.simulateTransaction(tx, {
-          replaceRecentBlockhash: true,
-        });
-
-        // TODO make this pretty, remove noise except important balance changes
-        simulationResultsText.push(JSON.stringify(simulationResults));
-      } catch (err) {
-        // May not need to do anything here but let user know the simulation failed
-        simulationResultsText.push(
-          text("**Warning: Transaction simulation failed ... Proceed anyway?")
-        );
-      }
-
       // How can we make this message more user-friendly?
       const confirmed = await snap.request({
         method: "snap_dialog",
@@ -205,8 +183,6 @@ export const signTransactionHandler = async (params: SignTransactionParams) => {
           type: "confirmation",
           content: panel([
             heading(`${params.origin} wants you to approve a transaction:`),
-            divider(),
-            ...simulationResultsText,
             divider(),
             ...instructionDetailsText,
           ]),
@@ -242,24 +218,6 @@ export const signTransactionHandler = async (params: SignTransactionParams) => {
         instructionDetailsText.push(text(`**Data:** ${data}`));
       });
 
-      const simulationResultsText: Text[] = [];
-
-      let simulationResults;
-      try {
-        // @ts-ignore
-        simulationResults = (await connection.simulateTransaction(tx, {
-          replaceRecentBlockhash: true,
-        })) as SimulatedTransactionResponse;
-
-        // TODO make this pretty, remove noise except important balance changes
-        simulationResultsText.push(JSON.stringify(simulationResults));
-      } catch (err) {
-        // May not need to do anything here but let user know the simulation failed
-        simulationResultsText.push(
-          text("**Warning: Transaction simulation failed ... Proceed anyway?")
-        );
-      }
-
       // How can we make this message more user-friendly?
       const confirmed = await snap.request({
         method: "snap_dialog",
@@ -267,6 +225,7 @@ export const signTransactionHandler = async (params: SignTransactionParams) => {
           type: "confirmation",
           content: panel([
             heading(`${params.origin} wants you to approve a transaction:`),
+            divider(),
             ...instructionDetailsText,
           ]),
         },
@@ -396,37 +355,6 @@ export const signAllTransactionsHandler = async (
       }
     });
 
-    const simulationResultsText: Text[] = [];
-
-    await Promise.all(
-      transactions.map((tx, index) => async () => {
-        // const isVersionedTransaction = params.transactions[index].isVersionedTransaction;
-        // if (isVersionedTransaction) {
-        let simulationResults;
-        try {
-          // @ts-ignore
-          simulationResults = await connection.simulateTransaction(tx, {
-            replaceRecentBlockhash: true,
-          });
-
-          // TODO make this pretty, remove noise except important balance changes
-          simulationResultsText.push(JSON.stringify(simulationResults));
-        } catch (err) {
-          // May not need to do anything here but let user know the simulation failed
-          simulationResultsText.push(
-            text(
-              `**Warning: Transaction ${
-                index + 1
-              } simulation failed ... Proceed anyway?`
-            )
-          );
-        }
-        // } else {
-
-        // }
-      })
-    );
-
     const confirmed = await snap.request({
       method: "snap_dialog",
       params: {
@@ -435,9 +363,6 @@ export const signAllTransactionsHandler = async (
           heading(
             `${params.origin} wants you to approve ${transactions.length} transactions:`
           ),
-          divider(),
-          ...simulationResultsText,
-          divider(),
           ...instructionDetailsText,
         ]),
       },

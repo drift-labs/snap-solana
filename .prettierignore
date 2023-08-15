@@ -2,3 +2,4 @@
 **/dist/**
 **/snaps-webpack-plugin/plugin.js
 **/snaps-webpack-plugin/plugin.js.map
+**/snap-wallet-adapter/src/version.ts
