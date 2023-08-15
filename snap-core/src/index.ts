@@ -10,9 +10,7 @@ import {
 } from "@solana/web3.js";
 import { deriveSolanaKeypair } from "./keypair";
 
-const TRANSACTION_SIMULATION_RPC_URL = "https://api.mainnet-beta.solana.com ";
-
-const connection = new Connection(TRANSACTION_SIMULATION_RPC_URL, "confirmed");
+const TRANSACTION_SIMULATION_RPC_URL = "https://api.mainnet-beta.solana.com";
 
 const DEBUG = false;
 
@@ -155,6 +153,13 @@ function typeCheckSignTransactionParams(params: SignTransactionParams) {
  */
 export const signTransactionHandler = async (params: SignTransactionParams) => {
   try {
+    console.log("signTransactionHandler");
+
+    const connection = new Connection(
+      TRANSACTION_SIMULATION_RPC_URL,
+      "confirmed"
+    );
+
     typeCheckSignTransactionParams(params);
 
     const byteArray = Object.keys(params.transaction).map(
@@ -183,18 +188,29 @@ export const signTransactionHandler = async (params: SignTransactionParams) => {
       });
 
       const simulationResultsText: Text[] = [];
-      let simulationResults;
+      simulationResultsText.push(
+        text("Transaction simulation results: (versioned)")
+      );
+
       try {
-        simulationResults = await connection.simulateTransaction(tx, {
+        const simulationResults = await connection.simulateTransaction(tx, {
           replaceRecentBlockhash: true,
         });
 
-        // TODO make this pretty, remove noise except important balance changes
-        simulationResultsText.push(JSON.stringify(simulationResults));
+        if (!simulationResults?.value || simulationResults.value?.err) {
+          simulationResultsText.push(JSON.stringify(simulationResults));
+          simulationResultsText.push(text(`${simulationResults.value.err}`));
+          simulationResultsText.push(
+            text(`**Transaction simulation failed. Proceed anyway?**`)
+          );
+        } else {
+          // TODO make this pretty, remove noise except important balance changes
+          simulationResultsText.push(text(JSON.stringify(simulationResults)));
+        }
       } catch (err) {
-        // May not need to do anything here but let user know the simulation failed
+        simulationResultsText.push(text(`${err}`));
         simulationResultsText.push(
-          text("**Warning: Transaction simulation failed ... Proceed anyway?")
+          text(`**Transaction simulation failed. Proceed anyway?**`)
         );
       }
 
@@ -208,7 +224,7 @@ export const signTransactionHandler = async (params: SignTransactionParams) => {
             divider(),
             ...simulationResultsText,
             divider(),
-            ...instructionDetailsText,
+            // ...instructionDetailsText,
           ]),
         },
       });
@@ -243,20 +259,27 @@ export const signTransactionHandler = async (params: SignTransactionParams) => {
       });
 
       const simulationResultsText: Text[] = [];
+      simulationResultsText.push(text("Transaction simulation results:"));
 
-      let simulationResults;
       try {
-        // @ts-ignore
-        simulationResults = (await connection.simulateTransaction(tx, {
-          replaceRecentBlockhash: true,
-        })) as SimulatedTransactionResponse;
+        const { blockhash } = await connection.getRecentBlockhash();
+        tx.recentBlockhash = blockhash;
+        const simulationResults = await connection.simulateTransaction(tx);
 
-        // TODO make this pretty, remove noise except important balance changes
-        simulationResultsText.push(JSON.stringify(simulationResults));
+        if (!simulationResults?.value || simulationResults.value?.err) {
+          simulationResultsText.push(JSON.stringify(simulationResults));
+          simulationResultsText.push(text(`${simulationResults.value.err}`));
+          simulationResultsText.push(
+            text(`**Transaction simulation failed. Proceed anyway?**`)
+          );
+        } else {
+          // TODO make this pretty, remove noise except important balance changes
+          simulationResultsText.push(text(JSON.stringify(simulationResults)));
+        }
       } catch (err) {
-        // May not need to do anything here but let user know the simulation failed
+        simulationResultsText.push(text(`${err}`));
         simulationResultsText.push(
-          text("**Warning: Transaction simulation failed ... Proceed anyway?")
+          text(`**Transaction simulation failed. Proceed anyway?**`)
         );
       }
 
@@ -267,7 +290,10 @@ export const signTransactionHandler = async (params: SignTransactionParams) => {
           type: "confirmation",
           content: panel([
             heading(`${params.origin} wants you to approve a transaction:`),
-            ...instructionDetailsText,
+            divider(),
+            ...simulationResultsText,
+            divider(),
+            // ...instructionDetailsText,
           ]),
         },
       });
@@ -343,6 +369,11 @@ export const signAllTransactionsHandler = async (
   params: signAllTransactionsParams
 ) => {
   try {
+    const connection = new Connection(
+      TRANSACTION_SIMULATION_RPC_URL,
+      "confirmed"
+    );
+
     typeCheckSignAllTransactionParams(params);
 
     const instructionDetailsText: Text[] = [];
@@ -398,19 +429,37 @@ export const signAllTransactionsHandler = async (
 
     const simulationResultsText: Text[] = [];
 
+
+    simulationResultsText.push(text('test'));
+
     await Promise.all(
-      transactions.map((tx, index) => async () => {
+      transactions.map(async (tx, index) => {
+        simulationResultsText.push(text(`${index}`));
+
         // const isVersionedTransaction = params.transactions[index].isVersionedTransaction;
         // if (isVersionedTransaction) {
         let simulationResults;
         try {
           // @ts-ignore
+          console.log("simulating tx...");
+          // @ts-ignore
           simulationResults = await connection.simulateTransaction(tx, {
             replaceRecentBlockhash: true,
           });
 
+          if (simulationResults.value?.err) {
+            simulationResultsText.push(text(JSON.stringify(simulationResults)));
+            simulationResultsText.push(
+              text(
+                `**Warning: Transaction simulation failed: ${simulationResults.value.err} | Proceed anyway?`
+              )
+            );
+          }
+
           // TODO make this pretty, remove noise except important balance changes
-          simulationResultsText.push(JSON.stringify(simulationResults));
+          simulationResultsText.push(
+            text(`simulation results: ${JSON.stringify(simulationResults)}`)
+          );
         } catch (err) {
           // May not need to do anything here but let user know the simulation failed
           simulationResultsText.push(
@@ -438,7 +487,7 @@ export const signAllTransactionsHandler = async (
           divider(),
           ...simulationResultsText,
           divider(),
-          ...instructionDetailsText,
+          // ...instructionDetailsText,
         ]),
       },
     });

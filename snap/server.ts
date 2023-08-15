@@ -10,6 +10,7 @@ const server = express();
 
 filesToServe.forEach((file) => {
 	server.get(file, (req, res) => {
+		res.set('Cache-Control', 'public, max-age=1');
 		res.sendFile(__dirname + file);
 	});
 });
