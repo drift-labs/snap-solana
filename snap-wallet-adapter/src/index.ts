@@ -42,7 +42,7 @@ export type Snap = {
 };
 
 export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
-  name: WalletName<string>;
+  name = "Metamask" as WalletName;
   url: string;
   readyState: WalletReadyState;
   connecting: boolean;

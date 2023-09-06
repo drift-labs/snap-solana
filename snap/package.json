@@ -1,6 +1,6 @@
 {
 	"name": "@drift-labs/snap-solana",
-	"version": "0.2.0-beta-0",
+	"version": "0.2.0",
 	"description": "A Metamask snap for interacting with Solana dApps",
 	"homepage": "https://www.drift.trade/",
 	"repository": {
