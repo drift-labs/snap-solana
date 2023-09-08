@@ -1,7 +1,9 @@
-## Snap-solana
+## Connect by Drift
 <br>
 
-This repo contains a [Metamask Snap]((https://docs.metamask.io/snaps/)) that allows metamask to function as a solana wallet, and a wallet adapter that extends the [Solana wallet standard](https://github.com/solana-labs/wallet-standard) to connect to the snap.
+
+This repo contains the Connect by Drift [Snap]((https://docs.metamask.io/snaps/)) for MetaMask that allows MetaMask to function as a Solana wallet, and a wallet adapter that extends the [Solana wallet standard](https://github.com/solana-labs/wallet-standard) to connect to this snap.
+
 <br><br>
 
 ---
@@ -17,7 +19,7 @@ This repo contains a [Metamask Snap]((https://docs.metamask.io/snaps/)) that all
 ### Building and running the project:
 <br>
 
-**Solana Wallet Snap:**
+**Connect by Drift Snap:**
 
 Run `yarn dev` from the `snap` folder. 
 

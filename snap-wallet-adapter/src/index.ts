@@ -42,12 +42,12 @@ export type Snap = {
 };
 
 export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
-  name = "Metamask" as WalletName;
-  url: string;
+  name = "Connect by Drift" as WalletName;
+  url = "https://github.com/drift-labs/snap-solana";
   readyState: WalletReadyState;
   connecting: boolean;
   supportedTransactionVersions?: ReadonlySet<TransactionVersion>;
-  snapId: string;
+  snapId = "npm:@drift-labs/snap-solana";
   icon = metamaskIcon;
   versionToUse = SNAP_VERSION;
 
@@ -58,22 +58,16 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
   public publicKey: PublicKey;
   public autoApprove: boolean;
 
-  public constructor({
-    snapId,
-    url,
-    version,
-  }: {
-    snapId: string;
-    url: string;
-    version?: string;
-  }) {
+  public constructor(snapId?: string) {
     super();
 
-    this.snapId = snapId;
-    this.url = url;
-
-    if (version) {
-      this.versionToUse = version;
+    // Only allow changing the snap id on localhost
+    if (
+      snapId &&
+      typeof window !== "undefined" &&
+      window?.location?.hostname === "localhost"
+    ) {
+      this.snapId = snapId;
     }
   }
 
@@ -198,7 +192,6 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
       installedSnaps[this.snapId]?.version !== this.versionToUse ||
       forceUpdate
     ) {
-      // console.log('snap needs to be installed/updated');
       await window.ethereum.request({
         method: "wallet_requestSnaps",
         params: {
