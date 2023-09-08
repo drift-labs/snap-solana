@@ -1,13 +1,13 @@
 {
-  "version": "0.2.0-beta-0",
-  "description": "This is a Metamask Snap designed to allow Metamask to seamlessly connect to Drift and function as a Solana wallet. Users of the snap can connect to Drift, bridge their Ethereum assets to Solana, and trade on Drift all from within Metamask.",
-  "proposedName": "Drift Connect",
+  "version": "0.2.1",
+  "description": "An open-sourced Solana Snap that allows Metamask users to natively interact with Solana applications. With Connect by Drift, you can now connect and trade on Drift with Metamask.",
+  "proposedName": "Connect by Drift",
   "repository": {
     "type": "git",
     "url": "https://github.com/drift-labs/snap-solana"
   },
   "source": {
-    "shasum": "txNJ3cdoh47t9J5kD3Ffxa9WLQutLrI7cN8bReIixm8=",
+    "shasum": "Qdgu2MxQNFIA610ZDVsQ8/KcAO2SnF8yqzMiwtWJmK0=",
     "location": {
       "npm": {
         "filePath": "dist/main.js",
