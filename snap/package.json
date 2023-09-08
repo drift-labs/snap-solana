@@ -1,6 +1,6 @@
 {
 	"name": "@drift-labs/snap-solana",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "An open-sourced Solana Snap that allows Metamask users to natively interact with Solana applications.",
 	"homepage": "https://www.drift.trade/",
 	"repository": {
