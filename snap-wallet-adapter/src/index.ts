@@ -69,6 +69,33 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
     ) {
       this.snapId = snapId;
     }
+
+    this.checkIfSnapsAreSupported();
+  }
+
+  private async checkIfSnapsAreSupported() {
+    if (typeof window !== "undefined" && window?.ethereum?.isMetaMask) {
+      try {
+        const installedSnaps = (await window.ethereum.request({
+          method: "wallet_getSnaps",
+        })) as GetSnapsResponse;
+
+        if (
+          !installedSnaps[this.snapId] ||
+          installedSnaps[this.snapId]?.version !== this.versionToUse
+        ) {
+          this.readyState = WalletReadyState.Loadable;
+        } else {
+          this.readyState = WalletReadyState.Installed;
+        }
+      } catch (err) {
+        this.readyState = WalletReadyState.Unsupported;
+      }
+    } else {
+      this.readyState = WalletReadyState.NotDetected;
+    }
+
+    this.emit("readyStateChange", this.readyState);
   }
 
   public async signMessage(_message: Uint8Array): Promise<Uint8Array> {
