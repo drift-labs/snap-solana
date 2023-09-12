@@ -1,8 +1,8 @@
 {
   "name": "@drift-labs/snap-wallet-adapter",
-  "version": "0.2.1",
-	"description": "A Solana Wallet Standard wallet adapter for the Connect by Drift MetaMask Snap.",
-	"homepage": "https://www.drift.trade/",
+  "version": "0.2.2",
+  "description": "A Solana Wallet Standard wallet adapter for the Connect by Drift MetaMask Snap.",
+  "homepage": "https://www.drift.trade/",
   "repository": {
     "type": "git",
     "url": "https://github.com/drift-labs/snap-solana"
@@ -31,7 +31,7 @@
     "ts-node": "^10.9.1"
   },
   "publishConfig": {
-		"access": "public",
-		"registry": "https://registry.npmjs.org/"
-	}
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
 }
