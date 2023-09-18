@@ -10,10 +10,13 @@ This repo contains the Connect by Drift [Snap]((https://docs.metamask.io/snaps/)
 
 ### Setting up the project:
 <br>
-`cd snap && yarn && yarn build-webpack-plugin`<br>
-`cd snap-wallet-adapter && yarn`
-<br><br>
-
+Prerequisites: Have bun installed
+<br>
+Steps:
+1. Run build_snap.sh from the main folder of the repo:
+```
+./build_snap.sh
+```
 ---
 
 ### Building and running the project:
