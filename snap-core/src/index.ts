@@ -2,8 +2,11 @@ import "@metamask/snaps-types";
 import { Text, divider, heading, panel, text } from "@metamask/snaps-ui";
 import {
   Keypair,
+  Message,
+  MessageV0,
   SerializeConfig,
   Transaction,
+  TransactionMessage,
   VersionedTransaction,
 } from "@solana/web3.js";
 import { deriveSolanaKeypair } from "./keypair";
@@ -90,6 +93,22 @@ export type SignTransactionParams = {
 
 const optionalBooleanTypes = ["undefined", "boolean"];
 const optionalNumberTypes = ["undefined", "number"];
+
+export type SignMessageParams = {
+  message: Record<string, number>;
+};
+
+function typeCheckSignMessageParams(params: SignMessageParams) {
+  if (typeof params.message !== "object") {
+    throw new TypeError("TypeError: message must be a serialized Buffer");
+  } else {
+    for (const key in params.message) {
+      if (typeof key !== "string" || typeof params.message[key] !== "number") {
+        throw new TypeError("TypeError: message must be a serialized Buffer");
+      }
+    }
+  }
+}
 
 function typeCheckTransactionParams(params: TransactionParams) {
   if (typeof params.transaction !== "object") {
@@ -407,6 +426,39 @@ export const signAllTransactionsHandler = async (
     } else {
       throw new Error("User rejected transaction");
     }
+  } catch (err) {
+    if (DEBUG) {
+      showDebugDialog(err);
+    }
+    throw err;
+  }
+};
+
+export const signMessageHandler = async (params: SignMessageParams) => {
+  try {
+    typeCheckSignMessageParams(params);
+
+    const byteArray = Object.keys(params.message).map(
+      (key) => params.message[key]
+    );
+
+    const buf = Buffer.from(byteArray);
+
+    const keypair = (await deriveSolanaKeypair()) as Keypair;
+
+    const message = Message.from(buf);
+
+    const tx = Transaction.populate(message);
+
+    tx.sign(keypair);
+
+    const signedMessage = tx.serializeMessage();
+    const signature = tx.signature;
+
+    return {
+      signedMessage,
+      signature,
+    };
   } catch (err) {
     if (DEBUG) {
       showDebugDialog(err);
