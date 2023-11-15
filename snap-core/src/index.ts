@@ -331,8 +331,15 @@ export const signAllTransactionsHandler = async (
         // Pretty print tx + instruction details
         tx.message.compiledInstructions.forEach((instruction, index) => {
           const programIndex = instruction.programIdIndex;
-          const accountKeys = tx.message.getAccountKeys();
-          const programAccountKey = accountKeys.get(programIndex);
+          let accountKeys: MessageAccountKeys | undefined;
+          let programAccountKey: PublicKey | undefined;
+          try {
+            accountKeys = tx.message.getAccountKeys();
+            programAccountKey = accountKeys.get(programIndex);
+          } catch (err) {
+            // Sometimes we get here with "Failed to get account key because lookup tables were not resolved"
+            // But we don't want to throw an error here
+          }
           const programId = programAccountKey?.toString() || "unknown";
 
           const data = instruction.data
