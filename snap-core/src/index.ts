@@ -2,6 +2,8 @@ import "@metamask/snaps-types";
 import { Text, divider, heading, panel, text } from "@metamask/snaps-ui";
 import {
   Keypair,
+  MessageAccountKeys,
+  PublicKey,
   SerializeConfig,
   Transaction,
   VersionedTransaction,
@@ -10,8 +12,8 @@ import { deriveSolanaKeypair } from "./keypair";
 
 const DEBUG = false;
 
-export const showDebugDialog = (err: any) => {
-  snap.request({
+export const showDebugDialog = async (err: any) => {
+  await snap.request({
     method: "snap_dialog",
     params: {
       type: "alert",
@@ -29,7 +31,7 @@ export const showPublicKeyHandler = async () => {
   return snap.request({
     method: "snap_dialog",
     params: {
-      type: "alert",
+      type: "confirmation",
       content: panel([
         text(`Your Solana public key: `),
         text(`${keypair?.publicKey.toString()}`),
@@ -47,7 +49,7 @@ export const getPublicKeyHandler = async () => {
     return keypair?.publicKey?.toString();
   } catch (err) {
     if (DEBUG) {
-      showDebugDialog(err);
+      await showDebugDialog(err);
     }
     throw err;
   }
@@ -163,8 +165,15 @@ export const signTransactionHandler = async (params: SignTransactionParams) => {
 
       tx.message.compiledInstructions.forEach((instruction, index) => {
         const programIndex = instruction.programIdIndex;
-        const accountKeys = tx.message.getAccountKeys();
-        const programAccountKey = accountKeys.get(programIndex);
+        let accountKeys: MessageAccountKeys | undefined;
+        let programAccountKey: PublicKey | undefined;
+        try {
+          accountKeys = tx.message.getAccountKeys();
+          programAccountKey = accountKeys.get(programIndex);
+        } catch (err) {
+          // Sometimes we get here with "Failed to get account key because lookup tables were not resolved"
+          // But we don't want to throw an error here
+        }
         const programId = programAccountKey?.toString() || "unknown";
         const data = instruction.data
           ? Buffer.from(instruction.data)?.toString("base64")
@@ -252,7 +261,7 @@ export const signTransactionHandler = async (params: SignTransactionParams) => {
     }
   } catch (err) {
     if (DEBUG) {
-      showDebugDialog(err);
+      await showDebugDialog(err);
     }
     throw err;
   }
@@ -409,7 +418,7 @@ export const signAllTransactionsHandler = async (
     }
   } catch (err) {
     if (DEBUG) {
-      showDebugDialog(err);
+      await showDebugDialog(err);
     }
     throw err;
   }
