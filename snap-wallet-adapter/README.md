@@ -6,7 +6,7 @@
 
 This is a wallet adapter for the [Connect by Drift MetaMask Snap](https://github.com/drift-labs/snap-solana) that implements the [Solana Wallet Standard](https://github.com/solana-labs/wallet-standard). Installing and adding this snap to your application gives your users the ability to use MetaMask to interact with Solana!
 
-### Snap Version: 0.2.2
+### Snap Version: 0.2.3
 
 The wallet adapter is locked to this version of the Connect by Drift snap.
 
