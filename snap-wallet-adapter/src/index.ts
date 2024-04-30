@@ -249,7 +249,6 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
   public disconnect = async () => {
     // Not sure if there's much for us to do here?
     this.publicKey = undefined;
-    this.snapId = undefined;
     this.emit("disconnect");
   };
 }
