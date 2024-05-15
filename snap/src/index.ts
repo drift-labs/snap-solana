@@ -5,6 +5,7 @@ import {
 	getPublicKeyHandler,
 	signTransactionHandler,
 	signAllTransactionsHandler,
+	signMessageHandler,
 } from '@drift-labs/snap-solana-core';
 
 /**
@@ -42,6 +43,12 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 			return await signAllTransactionsHandler({
 				origin,
 				transactions: params?.transactions,
+			});
+
+		case 'signMessage':
+			return await signMessageHandler({
+				origin,
+				message: params?.message,
 			});
 
 		default:
