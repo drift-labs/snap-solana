@@ -9,6 +9,7 @@ import {
   VersionedTransaction,
 } from "@solana/web3.js";
 import { deriveSolanaKeypair } from "./keypair";
+import nacl from "tweetnacl";
 
 const DEBUG = false;
 
@@ -93,20 +94,23 @@ export type SignTransactionParams = {
 const optionalBooleanTypes = ["undefined", "boolean"];
 const optionalNumberTypes = ["undefined", "number"];
 
-function typeCheckTransactionParams(params: TransactionParams) {
-  if (typeof params.transaction !== "object") {
-    throw new TypeError("TypeError: transaction must be a serialized Buffer");
-  } else {
-    for (const key in params.transaction) {
-      if (
-        typeof key !== "string" ||
-        typeof params.transaction[key] !== "number"
-      ) {
-        throw new TypeError(
-          "TypeError: transaction must be a serialized Buffer"
-        );
-      }
+function isSerializedBuffer(value: Record<any, any>) {
+  if (typeof value !== "object") {
+    return false;
+  }
+
+  for (const key in value) {
+    if (typeof key !== "string" || typeof value[key] !== "number") {
+      return false;
     }
+  }
+
+  return true;
+}
+
+function typeCheckTransactionParams(params: TransactionParams) {
+  if (!isSerializedBuffer(params.transaction)) {
+    throw new TypeError("TypeError: transaction must be a serialized Buffer");
   }
 
   if (params.serializeConfig !== undefined) {
@@ -420,6 +424,88 @@ export const signAllTransactionsHandler = async (
       });
 
       return signed;
+    } else {
+      throw new Error("User rejected transaction");
+    }
+  } catch (err) {
+    if (DEBUG) {
+      await showDebugDialog(err);
+    }
+    throw err;
+  }
+};
+
+export type SignMessageParams = {
+  /**
+   * Origin url of the request, this will be displayed to the user
+   */
+  origin: string;
+
+  /**
+   * The message to sign
+   */
+  message: Record<string, number>;
+
+  /**
+   * (Optional): Account index to derive, if you want to derive a different account index. default: 0
+   * */
+  accountIndex?: number;
+};
+
+function typeCheckSignMessageParams(params: SignMessageParams) {
+  if (typeof params.origin !== "string") {
+    throw new TypeError("TypeError: origin must be a string");
+  }
+
+  if (!isSerializedBuffer(params.message)) {
+    throw new TypeError(
+      "TypeError: message must be a serialized Buffer or Uint8Array"
+    );
+  }
+
+  if (!optionalNumberTypes.includes(typeof params.accountIndex)) {
+    throw new TypeError("TypeError: accountIndex must be a number");
+  }
+}
+
+/**
+ * Signs a single Solana transaction
+ */
+export const signMessageHandler = async (params: SignMessageParams) => {
+  try {
+    typeCheckSignMessageParams(params);
+
+    const byteArray = Object.keys(params.message).map(
+      (key) => params.message[key]
+    );
+    const message = Buffer.from(byteArray);
+
+    const messageText = new TextDecoder().decode(message);
+
+    const confirmed = await snap.request({
+      method: "snap_dialog",
+      params: {
+        type: "confirmation",
+        content: panel([
+          heading(`${params.origin} wants you to sign a message`),
+          text("Signing this message will prove that you own the account"),
+          divider(),
+          heading("Message:"),
+          text(messageText),
+        ]),
+      },
+    });
+
+    if (confirmed) {
+      const keypair = (await deriveSolanaKeypair(
+        params.accountIndex
+      )) as Keypair;
+
+      const signed = nacl.sign.detached(message, keypair.secretKey);
+
+      return {
+        message: Buffer.from(signed).toJSON(),
+      };
     } else {
       throw new Error("User rejected transaction");
     }

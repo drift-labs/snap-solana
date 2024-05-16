@@ -32,6 +32,10 @@ type SignTransactionResults = {
   }[];
 };
 
+type SignMessageResults = {
+  message: BufferJson;
+};
+
 export type GetSnapsResponse = Record<string, Snap>;
 
 export type Snap = {
@@ -98,8 +102,23 @@ export class SnapWalletAdapter extends BaseMessageSignerWalletAdapter {
     this.emit("readyStateChange", this.readyState);
   }
 
-  public async signMessage(_message: Uint8Array): Promise<Uint8Array> {
-    throw new Error("Method not implemented.");
+  public async signMessage(message: Uint8Array): Promise<Uint8Array> {
+    const rpcRequestObject = {
+      method: "signMessage",
+      params: {
+        message,
+      },
+    };
+
+    const results = (await window.ethereum.request({
+      method: "wallet_invokeSnap",
+      params: {
+        snapId: this.snapId,
+        request: rpcRequestObject,
+      },
+    })) as SignMessageResults;
+
+    return Buffer.from(results?.message?.data);
   }
 
   // @ts-ignore
