@@ -469,7 +469,9 @@ function typeCheckSignMessageParams(params: SignMessageParams) {
 }
 
 /**
- * Signs a single Solana transaction
+ * Signs a message with the account's keypair and returns the signature
+ *
+ * This can be used to verify account ownership without sending a transaction
  */
 export const signMessageHandler = async (params: SignMessageParams) => {
   try {
