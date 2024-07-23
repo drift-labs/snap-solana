@@ -1,0 +1,14 @@
+{
+  "name": "snap-solana",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "sh ./build_snap.sh",
+        "cwd": "snap-solana"
+      },
+      
+      "outputs": ["dist"]
+    }
+  }
+}
