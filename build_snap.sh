@@ -3,6 +3,8 @@ start_time=$(date +%s)
 
 echo ""
 echo "# INSTALLING SNAP DEV DEPENDENCIES"
+echo "# CLEANING BUN CACHE"
+bun pm cache rm
 echo ""
 rm -rf node_modules && bun install
 echo ""
